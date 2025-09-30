@@ -12,9 +12,11 @@
     "@auth/core": "^0.40.0",
     "@azure/msal-browser": "^4.24.0",
     "@azure/msal-react": "^3.0.20",
+    "@types/nodemailer": "^7.0.2",
     "axios": "^1.12.2",
     "next": "15.5.4",
     "next-auth": "^4.24.11",
+    "nodemailer": "^7.0.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },

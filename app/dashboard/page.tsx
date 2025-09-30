@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import ProfileCard from "../../components/ProfileCard";
 import SuccessModal from "../../components/SuccessModal";
+import EmailSentModal from "../../components/EmailSentModal";
+import EmailSendingAnimation from "../../components/EmailSendingAnimation";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -19,6 +21,14 @@ export default function DashboardPage() {
     isOpen: false,
     userName: "",
     temporaryPassword: "",
+    userEmail: ""
+  });
+  const [emailSentModal, setEmailSentModal] = useState({
+    isOpen: false,
+    userEmail: ""
+  });
+  const [emailSendingAnimation, setEmailSendingAnimation] = useState({
+    isOpen: false,
     userEmail: ""
   });
 
@@ -146,21 +156,31 @@ export default function DashboardPage() {
   };
 
   const handleSendEmail = async (userName: string, temporaryPassword: string, userEmail: string) => {
+    // Fermer la modal de succès et afficher l'animation
+    setSuccessModal({ isOpen: false, userName: "", temporaryPassword: "", userEmail: "" });
+    setEmailSendingAnimation({ isOpen: true, userEmail });
+
     try {
+      // Simuler un délai d'envoi pour voir l'animation
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
       const response = await axios.post('/api/send-email', {
         userName,
         temporaryPassword,
         userEmail
       });
 
+      // Fermer l'animation et afficher la modal de succès
+      setEmailSendingAnimation({ isOpen: false, userEmail: "" });
+
       if (response.data.success) {
-        alert(`✅ Email envoyé avec succès à ${userEmail} !`);
-        setSuccessModal({ isOpen: false, userName: "", temporaryPassword: "", userEmail: "" });
+        setEmailSentModal({ isOpen: true, userEmail });
       } else {
-        alert('❌ Erreur lors de l\'envoi de l\'email');
+        alert('❌ Erreur lors de l\'envoi de l\'email de secours');
       }
     } catch (error) {
       console.error('Erreur lors de l\'envoi de l\'email:', error);
+      setEmailSendingAnimation({ isOpen: false, userEmail: "" });
       alert('❌ Erreur lors de l\'envoi de l\'email');
     }
   };
@@ -308,7 +328,7 @@ export default function DashboardPage() {
                             key={student.id} 
                             user={student} 
                             onPasswordReset={(userId, userName, temporaryPassword) => 
-                              handlePasswordReset(userId, userName, temporaryPassword, student.mail)
+                              handlePasswordReset(userId, userName, temporaryPassword, student.otherMails?.[0] || student.mail)
                             }
                           />
                         ))}
@@ -348,6 +368,19 @@ export default function DashboardPage() {
         temporaryPassword={successModal.temporaryPassword}
         userEmail={successModal.userEmail}
         onSendEmail={handleSendEmail}
+      />
+
+      {/* Modal d'envoi d'email */}
+      <EmailSentModal
+        isOpen={emailSentModal.isOpen}
+        onClose={() => setEmailSentModal({ isOpen: false, userEmail: "" })}
+        userEmail={emailSentModal.userEmail}
+      />
+
+      {/* Animation d'envoi d'email */}
+      <EmailSendingAnimation
+        isOpen={emailSendingAnimation.isOpen}
+        userEmail={emailSendingAnimation.userEmail}
       />
     </div>
   );

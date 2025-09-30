@@ -107,8 +107,8 @@ export default function SuccessModal({
                   <div className="text-sm text-amber-800 dark:text-amber-200">
                     <strong>Instructions importantes :</strong>
                     <ul className="list-disc list-inside mt-2 space-y-1">
-                      <li>Communiquez ce mot de passe à l'utilisateur</li>
-                      <li>L'utilisateur devra se reconnecter immédiatement</li>
+                      <li>Communiquez ce mot de passe à l&apos;utilisateur</li>
+                      <li>L&apos;utilisateur devra se reconnecter immédiatement</li>
                       <li>Il sera forcé de changer son mot de passe à la prochaine connexion</li>
                       <li>Ce mot de passe est temporaire et sécurisé</li>
                     </ul>
@@ -124,7 +124,10 @@ export default function SuccessModal({
                     <div className="text-sm text-purple-800 dark:text-purple-200">
                       <strong>Email de secours :</strong>
                       <p className="mt-1">
-                        Le mot de passe temporaire sera envoyé à : <span className="font-semibold">{userEmail}</span>
+                        Le mot de passe temporaire sera envoyé à l'email personel : <span className="font-semibold">{userEmail}</span>
+                      </p>
+                      <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                        Cet email est configuré comme adresse de récupération pour cet utilisateur.
                       </p>
                     </div>
                   </div>

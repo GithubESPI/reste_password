@@ -78,7 +78,7 @@ export default function PasswordResetModal({
                   </h3>
                   <p className="text-sm text-yellow-700 dark:text-yellow-300">
                     Vous êtes sur le point de réinitialiser le mot de passe pour <strong>{userName}</strong>. 
-                    Cette action est irréversible et l'utilisateur devra se reconnecter.
+                    Cette action est irréversible et l&apos;utilisateur devra se reconnecter.
                   </p>
                 </div>
               </div>
@@ -123,7 +123,7 @@ export default function PasswordResetModal({
                   <div className="text-sm text-blue-800 dark:text-blue-200">
                     <strong>Après la réinitialisation :</strong>
                     <ul className="list-disc list-inside mt-1 space-y-1">
-                      <li>L'utilisateur recevra le nouveau mot de passe</li>
+                      <li>L&apos;utilisateur recevra le nouveau mot de passe</li>
                       <li>Il devra se reconnecter immédiatement</li>
                       <li>Il sera forcé de changer son mot de passe à la prochaine connexion</li>
                     </ul>
