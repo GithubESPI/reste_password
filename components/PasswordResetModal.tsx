@@ -44,7 +44,7 @@ export default function PasswordResetModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -52,22 +52,22 @@ export default function PasswordResetModal({
       />
       
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm sm:max-w-md w-full max-h-[95vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-red-500 to-pink-500 p-6">
+        <div className="bg-gradient-to-r from-red-500 to-pink-500 p-4 sm:p-6">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white text-xl">🔐</span>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Réinitialisation de mot de passe</h2>
-              <p className="text-red-100 text-sm">Action administrative</p>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg sm:text-xl font-bold text-white">Réinitialisation de mot de passe</h2>
+              <p className="text-red-100 text-xs sm:text-sm">Action administrative</p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           <div className="mb-6">
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
               <div className="flex items-start space-x-3">
@@ -134,7 +134,7 @@ export default function PasswordResetModal({
           </div>
 
           {/* Actions */}
-          <div className="flex space-x-3">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <button
               onClick={handleClose}
               disabled={isLoading}
@@ -150,12 +150,14 @@ export default function PasswordResetModal({
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Réinitialisation...</span>
+                  <span className="hidden sm:inline">Réinitialisation...</span>
+                  <span className="sm:hidden">En cours...</span>
                 </>
               ) : (
                 <>
                   <span>🔐</span>
-                  <span>Réinitialiser</span>
+                  <span className="hidden sm:inline">Réinitialiser</span>
+                  <span className="sm:hidden">Reset</span>
                 </>
               )}
             </button>

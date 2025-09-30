@@ -33,7 +33,7 @@ export default function SuccessModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -41,24 +41,24 @@ export default function SuccessModal({
       />
       
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm sm:max-w-md w-full max-h-[95vh] overflow-y-auto">
         {/* Header avec gradient vert */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-6">
+        <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-4 sm:p-6">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-white text-2xl">✅</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-xl sm:text-2xl">✅</span>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Réinitialisation réussie</h2>
-              <p className="text-green-100 text-sm">Mot de passe mis à jour</p>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg sm:text-xl font-bold text-white">Réinitialisation réussie</h2>
+              <p className="text-green-100 text-xs sm:text-sm">Mot de passe mis à jour</p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           {/* Message de succès */}
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
               <div className="flex items-start space-x-3">
                 <span className="text-green-600 dark:text-green-400 text-lg">🎉</span>
@@ -74,22 +74,22 @@ export default function SuccessModal({
             </div>
 
             {/* Mot de passe temporaire */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   🔐 Mot de passe temporaire
                 </label>
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                   <input
                     type="text"
                     value={temporaryPassword}
                     readOnly
-                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white font-mono text-sm"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white font-mono text-xs sm:text-sm"
                   />
                   <button
                     type="button"
                     onClick={copyToClipboard}
-                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm whitespace-nowrap"
                     title="Copier le mot de passe"
                   >
                     📋
@@ -101,7 +101,7 @@ export default function SuccessModal({
               </div>
 
               {/* Instructions importantes */}
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 sm:p-4">
                 <div className="flex items-start space-x-2">
                   <span className="text-amber-600 dark:text-amber-400 text-sm">⚠️</span>
                   <div className="text-sm text-amber-800 dark:text-amber-200">
@@ -118,7 +118,7 @@ export default function SuccessModal({
 
               {/* Email de secours */}
               {userEmail && (
-                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3 sm:p-4">
                   <div className="flex items-start space-x-2">
                     <span className="text-purple-600 dark:text-purple-400 text-sm">📧</span>
                     <div className="text-sm text-purple-800 dark:text-purple-200">
@@ -151,7 +151,7 @@ export default function SuccessModal({
           </div>
 
           {/* Actions */}
-          <div className="flex space-x-3">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-6">
             <button
               onClick={onClose}
               className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -164,7 +164,8 @@ export default function SuccessModal({
                 className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
                 <span>📧</span>
-                <span>Envoyer par mail</span>
+                <span className="hidden sm:inline">Envoyer par mail</span>
+                <span className="sm:hidden">Envoyer</span>
               </button>
             ) : (
               <button
@@ -175,7 +176,8 @@ export default function SuccessModal({
                 className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
                 <span>📋</span>
-                <span>Copier et fermer</span>
+                <span className="hidden sm:inline">Copier et fermer</span>
+                <span className="sm:hidden">Copier</span>
               </button>
             )}
           </div>

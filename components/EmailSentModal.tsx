@@ -16,30 +16,30 @@ export default function EmailSentModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      
+
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm sm:max-w-md w-full max-h-[95vh] overflow-y-auto">
         {/* Header avec gradient vert */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-6">
+        <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-4 sm:p-6">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-white text-2xl">✅</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-xl sm:text-2xl">✅</span>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Email envoyé</h2>
-              <p className="text-green-100 text-sm">Opération réussie</p>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg sm:text-xl font-bold text-white">Email envoyé</h2>
+              <p className="text-green-100 text-xs sm:text-sm">Opération réussie</p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           {/* Message de succès */}
           <div className="mb-6">
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
