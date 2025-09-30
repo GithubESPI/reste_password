@@ -64,10 +64,10 @@ export default function EmailSentModal({
                   <div className="text-sm text-blue-800 dark:text-blue-200">
                     <strong>Prochaines étapes :</strong>
                     <ul className="list-disc list-inside mt-2 space-y-1">
-                      <li>L'utilisateur recevra l'email avec le mot de passe temporaire</li>
+                      <li>L&apos;utilisateur recevra l&apos;email avec le mot de passe temporaire</li>
                       <li>Il devra se reconnecter avec ce nouveau mot de passe</li>
                       <li>Il sera forcé de changer son mot de passe à la prochaine connexion</li>
-                      <li>Vérifiez que l'email est bien arrivé dans la boîte de réception</li>
+                      <li>Vérifiez que l&apos;email est bien arrivé dans la boîte de réception</li>
                     </ul>
                   </div>
                 </div>
@@ -79,8 +79,8 @@ export default function EmailSentModal({
                   <div className="text-sm text-amber-800 dark:text-amber-200">
                     <strong>Important :</strong>
                     <p className="mt-1">
-                      Assurez-vous que l'utilisateur a bien accès à cette adresse email. 
-                      Si l'email n'arrive pas, vérifiez les spams ou contactez l'utilisateur directement.
+                      Assurez-vous que l&apos;utilisateur a bien accès à cette adresse email. 
+                      Si l&apos;email n&apos;arrive pas, vérifiez les spams ou contactez l&apos;utilisateur directement.
                     </p>
                   </div>
                 </div>

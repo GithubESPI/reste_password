@@ -28,7 +28,7 @@ export default function EmailSendingAnimation({
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Envoi en cours</h2>
-              <p className="text-blue-100 text-sm">Préparation de l'email</p>
+              <p className="text-blue-100 text-sm">Préparation de l&apos;email</p>
             </div>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function EmailSendingAnimation({
               <div className="text-sm text-gray-700 dark:text-gray-300">
                 <strong>Veuillez patienter...</strong>
                 <p className="mt-1">
-                  L'email avec le mot de passe temporaire est en cours d'envoi. 
+                  L&apos;email avec le mot de passe temporaire est en cours d&apos;envoi. 
                   Cette opération peut prendre quelques secondes.
                 </p>
               </div>
