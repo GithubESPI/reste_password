@@ -109,7 +109,7 @@ export default function ProfileCard({ user, onPasswordReset }: ProfileCardProps)
                 <div className="bg-gray-800 rounded-lg p-3">
                   <div className="flex items-center space-x-2 mb-1">
                     <span className="text-gray-400 text-sm">👤</span>
-                    <span className="text-gray-400 text-sm">Type d'employé</span>
+                    <span className="text-gray-400 text-sm">Type d&apos;employé</span>
                   </div>
                   <div className="text-white font-bold text-sm uppercase">{user.employeeType}</div>
                 </div>

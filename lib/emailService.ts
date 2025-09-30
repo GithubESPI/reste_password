@@ -2,18 +2,30 @@ import nodemailer from 'nodemailer';
 
 // Configuration du service d'email pour Azure AD tenant
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  const config = {
     host: process.env.SMTP_HOST || 'smtp.office365.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: false, // true pour 465, false pour autres ports
     auth: {
-      user: process.env.SMTP_USER || 'dev.espi@groupe-espi.fr',
-      pass: process.env.SMTP_PASS || 'espi2077*'
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS 
     },
     tls: {
-      ciphers: 'SSLv3'
-    }
-  });
+      ciphers: 'SSLv3',
+      rejectUnauthorized: false
+    },
+    debug: true, // Active les logs de débogage SMTP
+    logger: true // Active les logs Nodemailer
+  };
+
+  console.log('=== CONFIGURATION SMTP ===');
+  console.log('Host:', config.host);
+  console.log('Port:', config.port);
+  console.log('User:', config.auth.user);
+  console.log('Secure:', config.secure);
+  console.log('========================');
+
+  return nodemailer.createTransport(config);
 };
 
 export interface EmailData {
@@ -23,7 +35,21 @@ export interface EmailData {
 }
 
 export const sendPasswordResetEmail = async (data: EmailData) => {
+  console.log('=== DÉBUT ENVOI EMAIL SMTP ===');
+  console.log('Destinataire:', data.userEmail);
+  console.log('Utilisateur:', data.userName);
+  console.log('Mot de passe:', data.temporaryPassword);
+  
   const transporter = createTransporter();
+  
+  // Vérification de la connexion SMTP
+  try {
+    await transporter.verify();
+    console.log('✅ Connexion SMTP vérifiée avec succès');
+  } catch (error) {
+    console.error('❌ Erreur de connexion SMTP:', error);
+    throw new Error('Impossible de se connecter au serveur SMTP');
+  }
   
   const emailTemplate = `
 ===============================================
@@ -57,7 +83,7 @@ suite à une demande de réinitialisation.
 
 📞 SUPPORT TECHNIQUE :
 Si vous rencontrez des difficultés, contactez notre équipe :
-• Email : dev.espi@groupe-espi.fr
+
 • Horaires : 9h00 - 17h00 (Lun-Ven)
 
 🛡️ SÉCURITÉ :
@@ -66,7 +92,7 @@ notre équipe de sécurité.
 
 Cordialement,
 L'équipe technique Groupe ESPI
-dev.espi@groupe-espi.fr
+
 
 ===============================================
 Cet email a été envoyé automatiquement.
@@ -157,15 +183,30 @@ Merci de ne pas y répondre directement.
   };
 
   try {
+    console.log('=== ENVOI EMAIL VIA SMTP ===');
+    console.log('From:', mailOptions.from);
+    console.log('To:', mailOptions.to);
+    console.log('Subject:', mailOptions.subject);
+    console.log('============================');
+    
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email envoyé avec succès:', info.messageId);
+    
+    console.log('✅ EMAIL ENVOYÉ AVEC SUCCÈS VIA SMTP');
+    console.log('Message ID:', info.messageId);
+    console.log('Response:', info.response);
+    console.log('Accepted:', info.accepted);
+    console.log('Rejected:', info.rejected);
+    console.log('=====================================');
+    
     return {
       success: true,
       messageId: info.messageId,
-      recipient: data.userEmail
+      recipient: data.userEmail,
+      response: info.response
     };
   } catch (error) {
-    console.error('Erreur lors de l\'envoi de l\'email:', error);
-    throw new Error('Erreur lors de l\'envoi de l\'email');
+    console.error('❌ ERREUR LORS DE L\'ENVOI SMTP:', error);
+    console.error('Détails de l\'erreur:', error);
+    throw new Error(`Erreur SMTP: ${error}`);
   }
 };

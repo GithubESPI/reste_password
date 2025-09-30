@@ -96,7 +96,7 @@ export default function SuccessModal({
                   </button>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Cliquez sur l'icône pour copier le mot de passe
+                  Cliquez sur l&apos;icône pour copier le mot de passe
                 </p>
               </div>
 
@@ -124,7 +124,7 @@ export default function SuccessModal({
                     <div className="text-sm text-purple-800 dark:text-purple-200">
                       <strong>Email de secours :</strong>
                       <p className="mt-1">
-                        Le mot de passe temporaire sera envoyé à l'email personel : <span className="font-semibold">{userEmail}</span>
+                        Le mot de passe temporaire sera envoyé à l&apos;email personel : <span className="font-semibold">{userEmail}</span>
                       </p>
                       <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
                         Cet email est configuré comme adresse de récupération pour cet utilisateur.
