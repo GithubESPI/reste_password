@@ -149,7 +149,7 @@ export default function DashboardPage() {
     }
 
     try {
-      const response = await axios.patch(
+      await axios.patch(
         `${process.env.NEXT_PUBLIC_GRAPH_API}/users/${userId}`,
         {
           passwordProfile: {

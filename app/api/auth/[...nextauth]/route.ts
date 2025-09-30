@@ -26,7 +26,7 @@ const handler = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      (session as any).accessToken = token.accessToken;
+      (session as { accessToken?: string }).accessToken = token.accessToken;
       return session;
     },
     async redirect({ url, baseUrl }) {
