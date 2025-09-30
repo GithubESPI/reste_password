@@ -201,8 +201,7 @@ Merci de ne pas y répondre directement.
     return {
       success: true,
       messageId: info.messageId,
-      recipient: data.userEmail,
-      response: info.response
+      recipient: data.userEmail
     };
   } catch (error) {
     console.error('❌ ERREUR LORS DE L\'ENVOI SMTP:', error);

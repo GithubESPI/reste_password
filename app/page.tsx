@@ -37,7 +37,7 @@ export default function HomePage() {
               {/* Welcome message */}
               <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-8">
                 <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                Application d'authentification sécurisée
+                Application d&apos;authentification sécurisée
               </div>
 
               {/* Main heading */}
@@ -50,7 +50,7 @@ export default function HomePage() {
 
               {/* Subheading */}
               <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-                Une solution d'authentification moderne et sécurisée avec Azure AD. 
+                Une solution d&apos;authentification moderne et sécurisée avec Azure AD. 
                 Connectez-vous facilement avec votre compte Microsoft et accédez à vos données en toute sécurité.
               </p>
 

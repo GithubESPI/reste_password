@@ -4,16 +4,44 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Image from "next/image";
 import ProfileCard from "../../components/ProfileCard";
 import SuccessModal from "../../components/SuccessModal";
 import EmailSentModal from "../../components/EmailSentModal";
 import EmailSendingAnimation from "../../components/EmailSendingAnimation";
 
+// Interfaces TypeScript
+interface User {
+  id: string;
+  displayName?: string;
+  mail?: string;
+  otherMails?: string[];
+  jobTitle?: string;
+  department?: string;
+  companyName?: string;
+  employeeType?: string;
+  createdDateTime?: string;
+  signInActivity?: {
+    lastSignInDateTime?: string;
+    lastNonInteractiveSignInDateTime?: string;
+    lastSignInRequestId?: string;
+  };
+}
+
+interface SessionWithToken {
+  accessToken?: string;
+  user?: {
+    name?: string;
+    email?: string;
+    image?: string;
+  };
+}
+
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [foundUserType, setFoundUserType] = useState("");
@@ -42,7 +70,7 @@ export default function DashboardPage() {
   }, [status, router]);
 
   const searchStudents = async (query: string) => {
-    if (!query.trim() || !(session as any)?.accessToken) return;
+    if (!query.trim() || !(session as SessionWithToken)?.accessToken) return;
     
     setIsSearching(true);
     setSearchError("");
@@ -52,7 +80,7 @@ export default function DashboardPage() {
       // Utiliser l'endpoint de recherche Microsoft Graph
       const response = await axios.get(`${process.env.NEXT_PUBLIC_GRAPH_API}/users`, {
         headers: {
-          Authorization: `Bearer ${(session as any).accessToken}`,
+          Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
         },
         params: {
           $filter: `startswith(displayName,'${query}') or startswith(mail,'${query}')`,
@@ -63,19 +91,19 @@ export default function DashboardPage() {
       
       // Filtrer côté client pour ne garder que les étudiants
       const allUsers = response.data.value || [];
-      const students = allUsers.filter((user: any) => 
+      const students = allUsers.filter((user: User) => 
         user.employeeType && user.employeeType.toLowerCase() === 'student'
       );
       
       // Récupérer les informations de connexion pour chaque étudiant (si permissions disponibles)
       const studentsWithSignInActivity = await Promise.all(
-        students.map(async (student: any) => {
+        students.map(async (student: User) => {
           try {
             const signInResponse = await axios.get(
               `${process.env.NEXT_PUBLIC_GRAPH_API}/users/${student.id}?$select=signInActivity`,
               {
                 headers: {
-                  Authorization: `Bearer ${(session as any).accessToken}`,
+                  Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
                 },
               }
             );
@@ -84,8 +112,8 @@ export default function DashboardPage() {
               ...student,
               signInActivity: signInResponse.data.signInActivity
             };
-          } catch (error: any) {
-            if (error.response?.status === 403) {
+          } catch (error: unknown) {
+            if ((error as { response?: { status?: number } }).response?.status === 403) {
               console.warn(`Permissions insuffisantes pour récupérer les données de connexion pour ${student.displayName}`);
             } else {
               console.error(`Erreur lors de la récupération des données de connexion pour ${student.displayName}:`, error);
@@ -115,7 +143,7 @@ export default function DashboardPage() {
   };
 
   const handlePasswordReset = async (userId: string, userName: string, temporaryPassword: string, userEmail?: string) => {
-    if (!(session as any)?.accessToken) {
+    if (!(session as SessionWithToken)?.accessToken) {
       alert("Erreur: Token d'accès non disponible");
       return;
     }
@@ -131,7 +159,7 @@ export default function DashboardPage() {
         },
         {
           headers: {
-            Authorization: `Bearer ${(session as any).accessToken}`,
+            Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
             'Content-Type': 'application/json'
           }
         }
@@ -144,12 +172,12 @@ export default function DashboardPage() {
         temporaryPassword,
         userEmail: userEmail || ""
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur lors de la réinitialisation du mot de passe:", error);
-      if (error.response?.status === 403) {
+      if ((error as { response?: { status?: number } }).response?.status === 403) {
         alert(`❌ Permissions insuffisantes pour réinitialiser le mot de passe.\n\n🔧 Actions requises :\n1. Contactez votre administrateur Azure AD\n2. Demandez l'approbation des permissions suivantes :\n   • User.ReadWrite.All\n   • Directory.AccessAsUser.All\n   • User-PasswordProfile.ReadWrite.All\n\n3. L'administrateur doit approuver ces permissions dans Azure Portal\n4. Reconnectez-vous après l'approbation`);
       } else {
-        alert(`Erreur lors de la réinitialisation du mot de passe: ${error.response?.data?.error?.message || error.message}`);
+        alert(`Erreur lors de la réinitialisation du mot de passe: ${(error as { response?: { data?: { error?: { message?: string } } }; message?: string }).response?.data?.error?.message || (error as { message?: string }).message}`);
       }
       throw error; // Re-throw pour que la modal puisse gérer l'erreur
     }
@@ -216,9 +244,11 @@ export default function DashboardPage() {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               {session?.user?.image && (
-                <img 
+                <Image 
                   src={session.user.image} 
                   alt="Avatar" 
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full"
                 />
               )}
@@ -323,7 +353,7 @@ export default function DashboardPage() {
                       </h3>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {searchResults.map((student: any) => (
+                        {searchResults.map((student: User) => (
                           <ProfileCard 
                             key={student.id} 
                             user={student} 
@@ -342,13 +372,13 @@ export default function DashboardPage() {
                         <svg className="w-8 h-8 text-yellow-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <p className="text-yellow-800">Aucun étudiant trouvé pour "{searchQuery}"</p>
+                        <p className="text-yellow-800">Aucun étudiant trouvé pour &quot;{searchQuery}&quot;</p>
                         {foundUserType && (
                           <p className="text-sm text-yellow-600 mt-1">
                             La personne trouvée est de type: <span className="font-semibold">{foundUserType}</span>
                           </p>
                         )}
-                        <p className="text-sm text-yellow-600 mt-1">Seuls les utilisateurs de type "Student" sont affichés</p>
+                        <p className="text-sm text-yellow-600 mt-1">Seuls les utilisateurs de type &quot;Student&quot; sont affichés</p>
                       </div>
                     </div>
                   )}
