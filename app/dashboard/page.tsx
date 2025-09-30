@@ -42,7 +42,7 @@ export default function DashboardPage() {
   }, [status, router]);
 
   const searchStudents = async (query: string) => {
-    if (!query.trim() || !session?.accessToken) return;
+    if (!query.trim() || !(session as any)?.accessToken) return;
     
     setIsSearching(true);
     setSearchError("");
@@ -52,7 +52,7 @@ export default function DashboardPage() {
       // Utiliser l'endpoint de recherche Microsoft Graph
       const response = await axios.get(`${process.env.NEXT_PUBLIC_GRAPH_API}/users`, {
         headers: {
-          Authorization: `Bearer ${session.accessToken}`,
+          Authorization: `Bearer ${(session as any).accessToken}`,
         },
         params: {
           $filter: `startswith(displayName,'${query}') or startswith(mail,'${query}')`,
@@ -75,7 +75,7 @@ export default function DashboardPage() {
               `${process.env.NEXT_PUBLIC_GRAPH_API}/users/${student.id}?$select=signInActivity`,
               {
                 headers: {
-                  Authorization: `Bearer ${session.accessToken}`,
+                  Authorization: `Bearer ${(session as any).accessToken}`,
                 },
               }
             );
@@ -115,7 +115,7 @@ export default function DashboardPage() {
   };
 
   const handlePasswordReset = async (userId: string, userName: string, temporaryPassword: string, userEmail?: string) => {
-    if (!session?.accessToken) {
+    if (!(session as any)?.accessToken) {
       alert("Erreur: Token d'accès non disponible");
       return;
     }
@@ -131,7 +131,7 @@ export default function DashboardPage() {
         },
         {
           headers: {
-            Authorization: `Bearer ${session.accessToken}`,
+            Authorization: `Bearer ${(session as any).accessToken}`,
             'Content-Type': 'application/json'
           }
         }
