@@ -5,14 +5,22 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ProfileCard from "../../components/ProfileCard";
+import SuccessModal from "../../components/SuccessModal";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [foundUserType, setFoundUserType] = useState("");
+  const [successModal, setSuccessModal] = useState({
+    isOpen: false,
+    userName: "",
+    temporaryPassword: "",
+    userEmail: ""
+  });
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -28,6 +36,7 @@ export default function DashboardPage() {
     
     setIsSearching(true);
     setSearchError("");
+    setFoundUserType("");
     
     try {
       // Utiliser l'endpoint de recherche Microsoft Graph
@@ -37,12 +46,51 @@ export default function DashboardPage() {
         },
         params: {
           $filter: `startswith(displayName,'${query}') or startswith(mail,'${query}')`,
-          $select: "id,displayName,mail,otherMails,jobTitle,department",
+          $select: "id,displayName,mail,otherMails,jobTitle,department,companyName,employeeType,createdDateTime",
           $top: 10
         }
       });
       
-      setSearchResults(response.data.value || []);
+      // Filtrer côté client pour ne garder que les étudiants
+      const allUsers = response.data.value || [];
+      const students = allUsers.filter((user: any) => 
+        user.employeeType && user.employeeType.toLowerCase() === 'student'
+      );
+      
+      // Récupérer les informations de connexion pour chaque étudiant (si permissions disponibles)
+      const studentsWithSignInActivity = await Promise.all(
+        students.map(async (student: any) => {
+          try {
+            const signInResponse = await axios.get(
+              `${process.env.NEXT_PUBLIC_GRAPH_API}/users/${student.id}?$select=signInActivity`,
+              {
+                headers: {
+                  Authorization: `Bearer ${session.accessToken}`,
+                },
+              }
+            );
+            
+            return {
+              ...student,
+              signInActivity: signInResponse.data.signInActivity
+            };
+          } catch (error: any) {
+            if (error.response?.status === 403) {
+              console.warn(`Permissions insuffisantes pour récupérer les données de connexion pour ${student.displayName}`);
+            } else {
+              console.error(`Erreur lors de la récupération des données de connexion pour ${student.displayName}:`, error);
+            }
+            return student;
+          }
+        })
+      );
+      
+      // Si aucun étudiant trouvé mais qu'il y a des utilisateurs, afficher le type du premier
+      if (studentsWithSignInActivity.length === 0 && allUsers.length > 0) {
+        setFoundUserType(allUsers[0].employeeType || 'Inconnu');
+      }
+      
+      setSearchResults(studentsWithSignInActivity);
     } catch (error) {
       console.error("Erreur lors de la recherche:", error);
       setSearchError("Erreur lors de la recherche d'étudiants");
@@ -54,6 +102,67 @@ export default function DashboardPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     searchStudents(searchQuery);
+  };
+
+  const handlePasswordReset = async (userId: string, userName: string, temporaryPassword: string, userEmail?: string) => {
+    if (!session?.accessToken) {
+      alert("Erreur: Token d'accès non disponible");
+      return;
+    }
+
+    try {
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_GRAPH_API}/users/${userId}`,
+        {
+          passwordProfile: {
+            password: temporaryPassword,
+            forceChangePasswordNextSignIn: true
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${session.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Afficher la modal de succès
+      setSuccessModal({
+        isOpen: true,
+        userName,
+        temporaryPassword,
+        userEmail: userEmail || ""
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la réinitialisation du mot de passe:", error);
+      if (error.response?.status === 403) {
+        alert(`❌ Permissions insuffisantes pour réinitialiser le mot de passe.\n\n🔧 Actions requises :\n1. Contactez votre administrateur Azure AD\n2. Demandez l'approbation des permissions suivantes :\n   • User.ReadWrite.All\n   • Directory.AccessAsUser.All\n   • User-PasswordProfile.ReadWrite.All\n\n3. L'administrateur doit approuver ces permissions dans Azure Portal\n4. Reconnectez-vous après l'approbation`);
+      } else {
+        alert(`Erreur lors de la réinitialisation du mot de passe: ${error.response?.data?.error?.message || error.message}`);
+      }
+      throw error; // Re-throw pour que la modal puisse gérer l'erreur
+    }
+  };
+
+  const handleSendEmail = async (userName: string, temporaryPassword: string, userEmail: string) => {
+    try {
+      const response = await axios.post('/api/send-email', {
+        userName,
+        temporaryPassword,
+        userEmail
+      });
+
+      if (response.data.success) {
+        alert(`✅ Email envoyé avec succès à ${userEmail} !`);
+        setSuccessModal({ isOpen: false, userName: "", temporaryPassword: "", userEmail: "" });
+      } else {
+        alert('❌ Erreur lors de l\'envoi de l\'email');
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi de l\'email:', error);
+      alert('❌ Erreur lors de l\'envoi de l\'email');
+    }
   };
 
   if (status === "loading") {
@@ -123,13 +232,13 @@ export default function DashboardPage() {
                 Bienvenue, {session?.user?.name || session?.user?.email} !
               </div>
 
-              {/* Main heading */}
-              <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Recherchez un 
-                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  {" "}étudiant par nom, email
-                </span>
-              </h1>
+                  {/* Main heading */}
+                  <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                    Recherchez un 
+                    <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                      {" "}étudiant
+                    </span>
+                  </h1>
 
               {/* Subheading */}
               
@@ -153,7 +262,7 @@ export default function DashboardPage() {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Rechercher un étudiant par nom, email ou ID..."
+                            placeholder="Rechercher un étudiant par nom ou email..."
                             className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                             disabled={isSearching}
                           />
@@ -190,12 +299,18 @@ export default function DashboardPage() {
                   {searchResults.length > 0 && (
                     <div className="mt-8 max-w-4xl mx-auto">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        Résultats de recherche ({searchResults.length})
+                        Étudiants trouvés ({searchResults.length})
                       </h3>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {searchResults.map((student: any) => (
-                          <ProfileCard key={student.id} user={student} />
+                          <ProfileCard 
+                            key={student.id} 
+                            user={student} 
+                            onPasswordReset={(userId, userName, temporaryPassword) => 
+                              handlePasswordReset(userId, userName, temporaryPassword, student.mail)
+                            }
+                          />
                         ))}
                       </div>
                     </div>
@@ -208,7 +323,12 @@ export default function DashboardPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                         <p className="text-yellow-800">Aucun étudiant trouvé pour "{searchQuery}"</p>
-                        <p className="text-sm text-yellow-600 mt-1">Essayez avec un autre terme de recherche</p>
+                        {foundUserType && (
+                          <p className="text-sm text-yellow-600 mt-1">
+                            La personne trouvée est de type: <span className="font-semibold">{foundUserType}</span>
+                          </p>
+                        )}
+                        <p className="text-sm text-yellow-600 mt-1">Seuls les utilisateurs de type "Student" sont affichés</p>
                       </div>
                     </div>
                   )}
@@ -219,6 +339,16 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de succès */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ isOpen: false, userName: "", temporaryPassword: "", userEmail: "" })}
+        userName={successModal.userName}
+        temporaryPassword={successModal.temporaryPassword}
+        userEmail={successModal.userEmail}
+        onSendEmail={handleSendEmail}
+      />
     </div>
   );
 }

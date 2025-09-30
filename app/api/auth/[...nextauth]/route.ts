@@ -9,7 +9,7 @@ const handler = NextAuth({
       tenantId: process.env.AZURE_AD_TENANT_ID!,
       authorization: {
         params: {
-          scope: "openid email profile User.Read",
+          scope: "openid email profile User.Read User.Read.All User.ReadWrite.All Directory.AccessAsUser.All User-PasswordProfile.ReadWrite.All",
         },
       },
     }),
