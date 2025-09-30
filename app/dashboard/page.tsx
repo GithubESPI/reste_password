@@ -236,9 +236,9 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
+              <span className="text-white font-bold text-sm">🔐</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">AuthApp</span>
+            <span className="text-xl font-bold text-gray-900">PasswordManager</span>
           </div>
           
           <div className="flex items-center space-x-4">
