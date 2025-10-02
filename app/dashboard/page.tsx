@@ -447,7 +447,7 @@ export default function DashboardPage() {
                         <div className="text-sm text-yellow-600 mt-2 space-y-1">
                           <p>💡 <strong>Conseils de recherche :</strong></p>
                           <ul className="text-left list-disc list-inside ml-4 space-y-1">
-                            <li>Essayez avec ou sans accents (ex: "José" ou "Jose")</li>
+                            <li>Essayez avec ou sans accents (ex: &quot;José&quot; ou &quot;Jose&quot;)</li>
                             <li>Recherchez par prénom, nom ou email</li>
                             <li>La recherche ignore les majuscules</li>
                             <li>Seuls les utilisateurs de type &quot;Student&quot; sont affichés</li>
