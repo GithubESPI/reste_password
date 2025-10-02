@@ -69,65 +69,130 @@ export default function DashboardPage() {
     }
   }, [status, router]);
 
+  // Fonction pour normaliser les textes (supprimer accents et casse, garder espaces)
+  const normalizeText = (text: string): string => {
+    if (!text) return '';
+    
+    return text
+      .toLowerCase() // Convertir en minuscules
+      .normalize('NFD') // Décomposer les caractères accentués
+      .replace(/[\u0300-\u036f]/g, '') // Supprime tous les accents
+      .replace(/[^a-z0-9\s]/g, '') // Garde lettres, chiffres et espaces
+      .replace(/\s+/g, ' ') // Normalise les espaces multiples
+      .trim();
+  };
+
+  // Fonction pour vérifier si un texte contient la recherche (insensible aux accents et casse)
+  const containsSearch = (text: string, searchQuery: string): boolean => {
+    if (!text || !searchQuery) return false;
+    
+    const normalizedText = normalizeText(text);
+    const normalizedSearch = normalizeText(searchQuery);
+    
+    console.log(`🔍 Recherche dans "${text}" avec "${searchQuery}"`);
+    console.log(`📝 Normalisé: "${normalizedText}" contient "${normalizedSearch}"`);
+    
+    // Recherche exacte
+    if (normalizedText.includes(normalizedSearch)) {
+      console.log('✅ Match exact trouvé');
+      return true;
+    }
+    
+    // Recherche par mots séparés (ex: "chiara simon" trouve "Chiara Simon")
+    const searchWords = normalizedSearch.split(' ').filter(word => word.length > 0);
+    if (searchWords.length > 1) {
+      const allWordsFound = searchWords.every(word => normalizedText.includes(word));
+      console.log(`🔤 Recherche par mots: ${searchWords.join(', ')} - Tous trouvés: ${allWordsFound}`);
+      return allWordsFound;
+    }
+    
+    console.log('❌ Aucun match');
+    return false;
+  };
+
   const searchStudents = async (query: string) => {
     if (!query.trim() || !(session as SessionWithToken)?.accessToken) return;
     
+    console.log('🔍 Recherche démarrée pour:', query);
     setIsSearching(true);
     setSearchError("");
     setFoundUserType("");
     
     try {
-      // Utiliser l'endpoint de recherche Microsoft Graph
+      // Recherche optimisée : utiliser l'API de recherche Microsoft Graph
       const response = await axios.get(`${process.env.NEXT_PUBLIC_GRAPH_API}/users`, {
         headers: {
           Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
         },
         params: {
-          $filter: `startswith(displayName,'${query}') or startswith(mail,'${query}')`,
+          $filter: `startswith(displayName,'${query}') or startswith(mail,'${query}') or contains(displayName,'${query}') or contains(mail,'${query}')`,
           $select: "id,displayName,mail,otherMails,jobTitle,department,companyName,employeeType,createdDateTime",
-          $top: 10
+          $top: 50 // Limite raisonnable pour la performance
         }
       });
       
+      console.log('📊 Utilisateurs trouvés par l\'API:', response.data.value?.length || 0);
+      
       // Filtrer côté client pour ne garder que les étudiants
       const allUsers = response.data.value || [];
-      const students = allUsers.filter((user: User) => 
-        user.employeeType && user.employeeType.toLowerCase() === 'student'
-      );
+      console.log('👥 Utilisateurs récupérés:', allUsers.map((u: User) => ({ name: u.displayName, type: u.employeeType })));
       
-      // Récupérer les informations de connexion pour chaque étudiant (si permissions disponibles)
-      const studentsWithSignInActivity = await Promise.all(
-        students.map(async (student: User) => {
-          try {
-            const signInResponse = await axios.get(
-              `${process.env.NEXT_PUBLIC_GRAPH_API}/users/${student.id}?$select=signInActivity`,
-              {
-                headers: {
-                  Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
-                },
-              }
-            );
-            
-            return {
-              ...student,
-              signInActivity: signInResponse.data.signInActivity
-            };
-          } catch (error: unknown) {
-            if ((error as { response?: { status?: number } }).response?.status === 403) {
-              console.warn(`Permissions insuffisantes pour récupérer les données de connexion pour ${student.displayName}`);
-            } else {
-              console.error(`Erreur lors de la récupération des données de connexion pour ${student.displayName}:`, error);
-            }
-            return student;
-          }
-        })
-      );
+      const students = allUsers.filter((user: User) => {
+        // Vérifier que c'est un étudiant
+        const isStudent = user.employeeType && user.employeeType.toLowerCase() === 'student';
+        console.log(`🔍 ${user.displayName} - Type: ${user.employeeType} - Est étudiant: ${isStudent}`);
+        
+        if (!isStudent) return false;
+        // Recherche flexible dans tous les champs disponibles
+        const searchFields = [
+          user.displayName || '',
+          user.mail || '',
+          user.jobTitle || '',
+          user.department || '',
+          user.companyName || '',
+          ...(user.otherMails || [])
+        ];
+        
+        // Recherche dans tous les champs avec normalisation
+        const matches = searchFields.some(field => {
+          if (!field) return false;
+          const result = containsSearch(field, query);
+          if (result) console.log(`✅ Match trouvé dans "${field}" pour "${query}"`);
+          return result;
+        });
+        
+        console.log(`🎯 ${user.displayName} - Correspond: ${matches}`);
+        return matches;
+      });
       
-      // Si aucun étudiant trouvé mais qu'il y a des utilisateurs, afficher le type du premier
-      if (studentsWithSignInActivity.length === 0 && allUsers.length > 0) {
-        setFoundUserType(allUsers[0].employeeType || 'Inconnu');
+      console.log('🎓 Étudiants trouvés:', students.length);
+      
+      // Utiliser directement les étudiants trouvés (sans récupérer les données de connexion pour éviter les erreurs 429)
+      const studentsWithSignInActivity = students;
+      
+      // Si aucun étudiant trouvé, chercher des utilisateurs correspondants pour information
+      if (studentsWithSignInActivity.length === 0) {
+        const matchingUsers = allUsers.filter((user: User) => {
+          const searchFields = [
+            user.displayName || '',
+            user.mail || '',
+            user.jobTitle || '',
+            user.department || '',
+            user.companyName || '',
+            ...(user.otherMails || [])
+          ];
+          return searchFields.some(field => {
+            if (!field) return false;
+            return containsSearch(field, query);
+          });
+        });
+        
+        if (matchingUsers.length > 0) {
+          setFoundUserType(matchingUsers[0].employeeType || 'Inconnu');
+        }
       }
       
+      console.log('📋 Résultats finaux:', studentsWithSignInActivity.length);
       setSearchResults(studentsWithSignInActivity);
     } catch (error) {
       console.error("Erreur lors de la recherche:", error);
@@ -141,6 +206,7 @@ export default function DashboardPage() {
     e.preventDefault();
     searchStudents(searchQuery);
   };
+
 
   const handlePasswordReset = async (userId: string, userName: string, temporaryPassword: string, userEmail?: string) => {
     if (!(session as SessionWithToken)?.accessToken) {
@@ -375,10 +441,18 @@ export default function DashboardPage() {
                         <p className="text-yellow-800">Aucun étudiant trouvé pour &quot;{searchQuery}&quot;</p>
                         {foundUserType && (
                           <p className="text-sm text-yellow-600 mt-1">
-                            La personne trouvée est de type: <span className="font-semibold">{foundUserType}</span>
+                            Une personne correspondante a été trouvée mais n&apos;est pas de type étudiant: <span className="font-semibold">{foundUserType}</span>
                           </p>
                         )}
-                        <p className="text-sm text-yellow-600 mt-1">Seuls les utilisateurs de type &quot;Student&quot; sont affichés</p>
+                        <div className="text-sm text-yellow-600 mt-2 space-y-1">
+                          <p>💡 <strong>Conseils de recherche :</strong></p>
+                          <ul className="text-left list-disc list-inside ml-4 space-y-1">
+                            <li>Essayez avec ou sans accents (ex: "José" ou "Jose")</li>
+                            <li>Recherchez par prénom, nom ou email</li>
+                            <li>La recherche ignore les majuscules</li>
+                            <li>Seuls les utilisateurs de type &quot;Student&quot; sont affichés</li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   )}
