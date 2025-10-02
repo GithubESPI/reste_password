@@ -441,7 +441,7 @@ export default function DashboardPage() {
                         <p className="text-yellow-800">Aucun étudiant trouvé pour &quot;{searchQuery}&quot;</p>
                         {foundUserType && (
                           <p className="text-sm text-yellow-600 mt-1">
-                            Une personne correspondante a été trouvée mais n&apos;est pas de type étudiant: <span className="font-semibold">{foundUserType}</span>
+                            Une personne correspondante a été trouvée mais n&apos;est pas de type étudiant(e): <span className="font-semibold">{foundUserType}</span>
                           </p>
                         )}
                         <div className="text-sm text-yellow-600 mt-2 space-y-1">
