@@ -450,7 +450,7 @@ export default function DashboardPage() {
                             <li>Essayez avec ou sans accents (ex: &quot;José&quot; ou &quot;Jose&quot;)</li>
                             <li>Recherchez par prénom, nom ou email</li>
                             <li>La recherche ignore les majuscules</li>
-                            <li>Seuls les utilisateurs de type &quot;Student&quot; sont affichés</li>
+                            <li>Seuls les utilisateurs de type &quot;Student&quot; sont affichés </li>
                           </ul>
                         </div>
                       </div>

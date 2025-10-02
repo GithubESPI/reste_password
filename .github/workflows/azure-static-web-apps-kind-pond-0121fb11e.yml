@@ -18,25 +18,29 @@ jobs:
        id-token: write
        contents: read
     steps:
+      # Récupérer le code source
       - uses: actions/checkout@v3
         with:
           submodules: true
           lfs: false
 
-      # Utiliser Node 18 (recommandé pour Next.js 15 et React 19)
-      - name: Use Node.js 18
+      # Utiliser Node.js 18 (compatible Next.js 15 + React 19)
+      - name: Setup Node.js 18
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'npm'
 
-      # Installer les dépendances avec fallback peer-deps
+      # Installer pnpm
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      # Installer les dépendances avec pnpm
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: pnpm install --frozen-lockfile
 
       # Construire l'application Next.js
       - name: Build app
-        run: npm run build
+        run: pnpm run build
 
       # Déploiement vers Azure Static Web Apps
       - name: Build And Deploy
