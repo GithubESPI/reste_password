@@ -76,23 +76,54 @@ export default function DashboardPage() {
     return text.toLowerCase().includes(query.toLowerCase());
   };
 
-  // Fonction fetcher pour SWR
+  // Fonction fetcher pour SWR avec pagination complète
   const fetcher = async (url: string) => {
     if (!(session as SessionWithToken)?.accessToken) {
       throw new Error('No access token');
     }
     
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
-      },
-      params: {
-        $select: "id,displayName,mail,otherMails,jobTitle,department,companyName,employeeType,createdDateTime",
-        $top: 999
-      }
-    });
+    let allUsers: User[] = [];
+    let nextLink: string | null = null;
+    let pageCount = 0;
     
-    return response.data.value || [];
+    console.log('🔄 Début de la récupération de tous les utilisateurs avec pagination...');
+    
+    do {
+      const currentUrl = nextLink || url;
+      const params = nextLink ? {} : {
+        $select: "id,displayName,mail,otherMails,jobTitle,department,companyName,employeeType,createdDateTime",
+        $top: 999 // Maximum par page
+      };
+      
+      console.log(`📄 Récupération page ${pageCount + 1}...`);
+      const response = await axios.get(currentUrl, {
+        headers: {
+          Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
+        },
+        params: nextLink ? undefined : params
+      });
+      
+      const users = response.data.value || [];
+      allUsers = [...allUsers, ...users];
+      nextLink = response.data['@odata.nextLink'];
+      pageCount++;
+      
+      console.log(`📊 Page ${pageCount}: ${users.length} utilisateurs (Total: ${allUsers.length})`);
+      
+      // Limite de sécurité pour éviter les boucles infinies
+      if (pageCount > 50) {
+        console.warn('⚠️ Limite de pages atteinte (50), arrêt de la récupération');
+        break;
+      }
+      
+      // Délai entre les requêtes pour éviter les erreurs 429
+      if (nextLink) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    } while (nextLink);
+    
+    console.log('📊 Total utilisateurs récupérés avec pagination:', allUsers.length);
+    return allUsers;
   };
 
   // Utiliser SWR pour récupérer les utilisateurs
