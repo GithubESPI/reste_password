@@ -1,10 +1,11 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Image from "next/image";
+import useSWR from "swr";
 import ProfileCard from "../../components/ProfileCard";
 import SuccessModal from "../../components/SuccessModal";
 import EmailSentModal from "../../components/EmailSentModal";
@@ -69,121 +70,61 @@ export default function DashboardPage() {
     }
   }, [status, router]);
 
-  // Fonction pour normaliser les textes (supprimer accents et casse, garder espaces)
-  const normalizeText = (text: string): string => {
-    if (!text) return '';
-    
-    return text
-      .toLowerCase() // Convertir en minuscules
-      .normalize('NFD') // Décomposer les caractères accentués
-      .replace(/[\u0300-\u036f]/g, '') // Supprime tous les accents
-      .replace(/[^a-z0-9\s]/g, '') // Garde lettres, chiffres et espaces
-      .replace(/\s+/g, ' ') // Normalise les espaces multiples
-      .trim();
+  // Fonction de recherche simple
+  const searchInText = (text: string, query: string): boolean => {
+    if (!text || !query) return false;
+    return text.toLowerCase().includes(query.toLowerCase());
   };
 
-  // Fonction pour vérifier si un texte contient la recherche (insensible aux accents et casse)
-  const containsSearch = (text: string, searchQuery: string): boolean => {
-    if (!text || !searchQuery) return false;
-    
-    const normalizedText = normalizeText(text);
-    const normalizedSearch = normalizeText(searchQuery);
-    
-    console.log(`🔍 Recherche dans "${text}" avec "${searchQuery}"`);
-    console.log(`📝 Normalisé: "${normalizedText}" contient "${normalizedSearch}"`);
-    
-    // Recherche exacte
-    if (normalizedText.includes(normalizedSearch)) {
-      console.log('✅ Match exact trouvé');
-      return true;
+  // Fonction fetcher pour SWR
+  const fetcher = async (url: string) => {
+    if (!(session as SessionWithToken)?.accessToken) {
+      throw new Error('No access token');
     }
     
-    // Recherche par mots séparés (ex: "chiara simon" trouve "Chiara Simon")
-    const searchWords = normalizedSearch.split(' ').filter(word => word.length > 0);
-    if (searchWords.length > 1) {
-      const allWordsFound = searchWords.every(word => normalizedText.includes(word));
-      console.log(`🔤 Recherche par mots: ${searchWords.join(', ')} - Tous trouvés: ${allWordsFound}`);
-      return allWordsFound;
-    }
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
+      },
+      params: {
+        $select: "id,displayName,mail,otherMails,jobTitle,department,companyName,employeeType,createdDateTime",
+        $top: 999
+      }
+    });
     
-    console.log('❌ Aucun match');
-    return false;
+    return response.data.value || [];
   };
 
-  const searchStudents = async (query: string) => {
-    if (!query.trim() || !(session as SessionWithToken)?.accessToken) return;
-    
+  // Utiliser SWR pour récupérer les utilisateurs
+  const { data: allUsers = [], error: usersError, isLoading: usersLoading } = useSWR(
+    session?.accessToken ? `${process.env.NEXT_PUBLIC_GRAPH_API}/users` : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 60000, // Cache pendant 1 minute
+    }
+  );
+
+  const searchStudents = (query: string) => {
     console.log('🔍 Recherche démarrée pour:', query);
     setIsSearching(true);
     setSearchError("");
     setFoundUserType("");
     
     try {
-      // Récupérer les utilisateurs sans filtre (le filtre n'est pas supporté par l'API)
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_GRAPH_API}/users`, {
-        headers: {
-          Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
-        },
-        params: {
-          $select: "id,displayName,mail,otherMails,jobTitle,department,companyName,employeeType,createdDateTime",
-          $top: 100 // Limite raisonnable pour la performance
-        }
-      });
-      
-      console.log('📊 Utilisateurs récupérés:', response.data.value?.length || 0);
-      
-      // Filtrer côté client pour ne garder que les étudiants
-      const allUsers = response.data.value || [];
-      console.log('👥 Tous les utilisateurs:', allUsers.map((u: User) => ({ name: u.displayName, type: u.employeeType })));
-      
-      // D'abord, afficher tous les types d'utilisateurs pour diagnostic
-      const userTypes = allUsers.reduce((acc, user) => {
-        const type = user.employeeType || 'null';
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      console.log('📊 Types d\'utilisateurs trouvés:', userTypes);
-      
+      // Filtrer les étudiants depuis les données SWR
       const students = allUsers.filter((user: User) => {
-        // Vérifier que c'est un étudiant
         const isStudent = user.employeeType && user.employeeType.toLowerCase() === 'student';
-        console.log(`🔍 ${user.displayName} - Type: ${user.employeeType} - Est étudiant: ${isStudent}`);
-        
-        if (!isStudent) return false;
-        
-        // Recherche flexible dans tous les champs disponibles
-        const searchFields = [
-          user.displayName || '',
-          user.mail || '',
-          user.jobTitle || '',
-          user.department || '',
-          user.companyName || '',
-          ...(user.otherMails || [])
-        ];
-        
-        console.log(`🔍 Recherche dans les champs pour ${user.displayName}:`, searchFields);
-        
-        // Recherche dans tous les champs avec normalisation
-        const matches = searchFields.some(field => {
-          if (!field) return false;
-          const result = containsSearch(field, query);
-          if (result) console.log(`✅ Match trouvé dans "${field}" pour "${query}"`);
-          return result;
-        });
-        
-        console.log(`🎯 ${user.displayName} - Correspond: ${matches}`);
-        return matches;
+        return isStudent;
       });
       
       console.log('🎓 Étudiants trouvés:', students.length);
       
-      // Utiliser directement les étudiants trouvés (sans récupérer les données de connexion pour éviter les erreurs 429)
-      const studentsWithSignInActivity = students;
-      
-      // Si aucun étudiant trouvé, chercher des utilisateurs correspondants pour information
-      if (studentsWithSignInActivity.length === 0) {
-        const matchingUsers = allUsers.filter((user: User) => {
+      // Si une recherche est effectuée, filtrer les étudiants
+      let filteredStudents = students;
+      if (query && query.trim()) {
+        filteredStudents = students.filter((user: User) => {
           const searchFields = [
             user.displayName || '',
             user.mail || '',
@@ -192,22 +133,15 @@ export default function DashboardPage() {
             user.companyName || '',
             ...(user.otherMails || [])
           ];
-          return searchFields.some(field => {
-            if (!field) return false;
-            return containsSearch(field, query);
-          });
+          return searchFields.some(field => searchInText(field, query));
         });
-        
-        if (matchingUsers.length > 0) {
-          setFoundUserType(matchingUsers[0].employeeType || 'Inconnu');
-        }
       }
       
-      console.log('📋 Résultats finaux:', studentsWithSignInActivity.length);
-      setSearchResults(studentsWithSignInActivity);
-    } catch (error) {
+      console.log('📋 Résultats finaux:', filteredStudents.length);
+      setSearchResults(filteredStudents);
+    } catch (error: any) {
       console.error("Erreur lors de la recherche:", error);
-      setSearchError("Erreur lors de la recherche d'étudiants");
+      setSearchError(`Erreur lors de la recherche d'étudiants: ${error.message}`);
     } finally {
       setIsSearching(false);
     }
@@ -217,6 +151,23 @@ export default function DashboardPage() {
     e.preventDefault();
     searchStudents(searchQuery);
   };
+
+  // Gérer les erreurs SWR
+  useEffect(() => {
+    if (usersError) {
+      console.error("Erreur SWR:", usersError);
+      if (usersError.response?.status === 401) {
+        setSearchError("❌ Session expirée. Veuillez vous reconnecter.");
+        setTimeout(() => {
+          router.push('/login');
+        }, 3000);
+      } else if (usersError.response?.status === 403) {
+        setSearchError("❌ Permissions insuffisantes. Contactez votre administrateur.");
+      } else {
+        setSearchError(`Erreur lors de la récupération des utilisateurs: ${usersError.message}`);
+      }
+    }
+  }, [usersError, router]);
 
 
   const handlePasswordReset = async (userId: string, userName: string, temporaryPassword: string, userEmail?: string) => {
@@ -290,10 +241,13 @@ export default function DashboardPage() {
     }
   };
 
-  if (status === "loading") {
+  if (status === "loading" || usersLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement des utilisateurs...</p>
+        </div>
       </div>
     );
   }
@@ -395,7 +349,7 @@ export default function DashboardPage() {
                           />
                           <button
                             type="submit"
-                            disabled={isSearching || !searchQuery.trim()}
+                            disabled={isSearching}
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors text-sm font-medium"
                           >
                             {isSearching ? (
