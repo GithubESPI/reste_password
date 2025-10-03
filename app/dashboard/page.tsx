@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Image from "next/image";
@@ -119,23 +119,31 @@ export default function DashboardPage() {
     setFoundUserType("");
     
     try {
-      // Recherche optimisée : utiliser l'API de recherche Microsoft Graph
+      // Récupérer les utilisateurs sans filtre (le filtre n'est pas supporté par l'API)
       const response = await axios.get(`${process.env.NEXT_PUBLIC_GRAPH_API}/users`, {
         headers: {
           Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
         },
         params: {
-          $filter: `startswith(displayName,'${query}') or startswith(mail,'${query}') or contains(displayName,'${query}') or contains(mail,'${query}')`,
           $select: "id,displayName,mail,otherMails,jobTitle,department,companyName,employeeType,createdDateTime",
-          $top: 50 // Limite raisonnable pour la performance
+          $top: 100 // Limite raisonnable pour la performance
         }
       });
       
-      console.log('📊 Utilisateurs trouvés par l\'API:', response.data.value?.length || 0);
+      console.log('📊 Utilisateurs récupérés:', response.data.value?.length || 0);
       
       // Filtrer côté client pour ne garder que les étudiants
       const allUsers = response.data.value || [];
-      console.log('👥 Utilisateurs récupérés:', allUsers.map((u: User) => ({ name: u.displayName, type: u.employeeType })));
+      console.log('👥 Tous les utilisateurs:', allUsers.map((u: User) => ({ name: u.displayName, type: u.employeeType })));
+      
+      // D'abord, afficher tous les types d'utilisateurs pour diagnostic
+      const userTypes = allUsers.reduce((acc, user) => {
+        const type = user.employeeType || 'null';
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      console.log('📊 Types d\'utilisateurs trouvés:', userTypes);
       
       const students = allUsers.filter((user: User) => {
         // Vérifier que c'est un étudiant
@@ -143,6 +151,7 @@ export default function DashboardPage() {
         console.log(`🔍 ${user.displayName} - Type: ${user.employeeType} - Est étudiant: ${isStudent}`);
         
         if (!isStudent) return false;
+        
         // Recherche flexible dans tous les champs disponibles
         const searchFields = [
           user.displayName || '',
@@ -152,6 +161,8 @@ export default function DashboardPage() {
           user.companyName || '',
           ...(user.otherMails || [])
         ];
+        
+        console.log(`🔍 Recherche dans les champs pour ${user.displayName}:`, searchFields);
         
         // Recherche dans tous les champs avec normalisation
         const matches = searchFields.some(field => {
