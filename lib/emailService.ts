@@ -15,7 +15,7 @@ const createTransporter = () => {
       rejectUnauthorized: false
     },
     debug: true, // Active les logs de débogage SMTP
-    logger: true // Active les logs Nodemailer
+    logger: true // Active les logs Nodemailer /
   };
 
   console.log('=== CONFIGURATION SMTP ===');
