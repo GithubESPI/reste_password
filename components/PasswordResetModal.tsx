@@ -124,7 +124,7 @@ export default function PasswordResetModal({
                     <strong>Après la réinitialisation :</strong>
                     <ul className="list-disc list-inside mt-1 space-y-1">
                       <li>L&apos;utilisateur recevra le nouveau mot de passe</li>
-                      <li>Il devra se reconnecter immédiatement</li>
+                      <li>Il devra se reconnecter immédiatement </li>
                       <li>Il sera forcé de changer son mot de passe à la prochaine connexion</li>
                     </ul>
                   </div>
