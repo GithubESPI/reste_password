@@ -15,19 +15,23 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
+      # 1️⃣ Checkout du repo
       - uses: actions/checkout@v3
         with:
           submodules: true
           lfs: false
 
+      # 2️⃣ Installer Node.js
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # Compatible avec Oryx par défaut
+          node-version: '18' # Compatible Oryx Azure
 
-      - name: Create .npmrc to ignore peer dependency conflicts
+      # 3️⃣ Créer .npmrc pour ignorer les conflits peer dependencies
+      - name: Create .npmrc
         run: echo "legacy-peer-deps=true" > .npmrc
 
+      # 4️⃣ Cacher les dépendances NPM
       - name: Cache NPM dependencies
         uses: actions/cache@v3
         with:
@@ -36,12 +40,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      # 5️⃣ Installer les dépendances
       - name: Install Dependencies
         run: npm install
 
-      - name: Build App
-        run: npm run build
+      # 6️⃣ Build Next.js + export statique
+      - name: Build and Export App
+        run: |
+          npm run build
+          npm run export
 
+      # 7️⃣ Déploiement vers Azure Static Web Apps
       - name: Build and Deploy to Azure Static Web Apps
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -49,9 +58,9 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ASHY_BUSH_09EE00D03 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "/"                # chemin vers le code source
-          api_location: "api"              # chemin vers l'API (si vous en avez)
-          output_location: ".next"         # dossier du build Next.js
+          app_location: "/"       # Chemin vers le code source
+          api_location: ""        # Vide si pas d'API
+          output_location: "out"  # Dossier généré par next export
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
