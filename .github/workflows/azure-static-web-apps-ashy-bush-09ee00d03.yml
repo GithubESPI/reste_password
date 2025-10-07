@@ -48,7 +48,7 @@ jobs:
       - name: Build and Export App
         run: |
           npm run build
-          npm run export
+          
 
       # 7️⃣ Déploiement vers Azure Static Web Apps
       - name: Build and Deploy to Azure Static Web Apps
@@ -60,7 +60,7 @@ jobs:
           action: "upload"
           app_location: "/"       # Chemin vers le code source
           api_location: ""        # Vide si pas d'API
-          output_location: "out"  # Dossier généré par next export
+          output_location: ".next"  # Dossier généré par next export
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
