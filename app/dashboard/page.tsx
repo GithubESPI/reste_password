@@ -96,7 +96,7 @@ export default function DashboardPage() {
       };
       
       console.log(`📄 Récupération page ${pageCount + 1}...`);
-      const response = await axios.get(currentUrl, {
+      const response: any = await axios.get(currentUrl, {
         headers: {
           Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
         },
