@@ -23,7 +23,10 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20' # Adapter selon votre projet
+          node-version: '18'  # Compatible avec Oryx par défaut
+
+      - name: Create .npmrc to ignore peer dependency conflicts
+        run: echo "legacy-peer-deps=true" > .npmrc
 
       - name: Cache NPM dependencies
         uses: actions/cache@v3
@@ -34,7 +37,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install Dependencies
-        run: npm install --legacy-peer-deps
+        run: npm install
 
       - name: Build App
         run: npm run build
@@ -46,9 +49,9 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ASHY_BUSH_09EE00D03 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "/"                # chemin vers le code source de l'app
+          app_location: "/"                # chemin vers le code source
           api_location: "api"              # chemin vers l'API (si vous en avez)
-          output_location: ".next/static"  # dossier du build Next.js exporté
+          output_location: ".next"         # dossier du build Next.js
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
