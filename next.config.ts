@@ -1,8 +1,8 @@
 import { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  // Removed output: 'export' to enable server-side functionality for NextAuth
-  // Azure Static Web Apps can still be used with server-side rendering
+  output: 'export', // Génère un site statique prêt pour Azure Static Web Apps
+  // autres options que tu avais déjà
 }
 
 export default nextConfig
