@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev node server.js",
-    "build": "next build --no-lint node server.js",
-    "start": "next start -p 3000 node server.js",
+    "dev": "next dev",
+    "build": "next build --no-lint",
+    "start": "node server.js",
     "lint": "eslint",
     "export": "next export"
   },
