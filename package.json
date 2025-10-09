@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
   "build": "next build --no-lint --turbopack",
-  "start": "next start -p 3000",
+  "start": "/home/site/wwwroot/node_modules/next/dist/bin/next",
   "lint": "eslint",
   "export": "next export"
   },
