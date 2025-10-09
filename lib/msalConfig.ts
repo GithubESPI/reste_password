@@ -3,7 +3,7 @@ import { PublicClientApplication } from "@azure/msal-browser";
 
 const msalConfig = {
   auth: {
-    clientId: process.env.NEXT_PUBLIC_CLIENT_ID!,
+    clientId: process.env.AZURE_AD_CLIENT_ID!,
     authority: process.env.NEXT_PUBLIC_AUTHORITY!,
     redirectUri: "/", // ou une autre route
   },
