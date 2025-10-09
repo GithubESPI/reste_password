@@ -3,11 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node server.js",
     "build": "next build",
-    "start": "/home/site/wwwroot/node_modules/next/dist/bin/next",
-    "startLocal" : "next start",
-    "lint": "next lint"
+    "start": "node server.js"
 
   },
   "dependencies": {
