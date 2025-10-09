@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-  "build": "next build --no-lint --turbopack",
-  "start": "/home/site/wwwroot/node_modules/next/dist/bin/next",
-  "lint": "eslint",
-  "export": "next export"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "/home/site/wwwroot/node_modules/next/dist/bin/next",
+    "startLocal" : "next start",
+    "lint": "next lint"
+
   },
   "dependencies": {
     "@auth/core": "^0.40.0",
