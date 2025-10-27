@@ -1,7 +1,7 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
@@ -9,11 +9,13 @@ const handler = NextAuth({
       tenantId: process.env.AZURE_AD_TENANT_ID!,
       authorization: {
         params: {
-          scope: "openid email profile User.Read User.Read.All User.ReadWrite.All Directory.AccessAsUser.All User-PasswordProfile.ReadWrite.All",
+          scope: "openid email profile User.Read User.Read.All User.ReadWrite.All Directory.AccessAsUser.All User-PasswordProfile.ReadWrite.All, Mail.Send",
         },
       },
     }),
   ],
+  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
   pages: {
     signIn: "/login",
     error: "/login",
@@ -40,6 +42,8 @@ const handler = NextAuth({
       return `${baseUrl}/redirect`;
     },
   },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
