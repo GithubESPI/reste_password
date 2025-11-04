@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -19,7 +20,14 @@ export default function SuccessModal({
   userEmail,
   onSendEmail
 }: SuccessModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(temporaryPassword);
@@ -32,7 +40,7 @@ export default function SuccessModal({
     }
   };
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
@@ -185,4 +193,6 @@ export default function SuccessModal({
       </div>
     </div>
   );
+
+  return typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

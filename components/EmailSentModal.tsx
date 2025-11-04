@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface EmailSentModalProps {
   isOpen: boolean;
@@ -13,9 +14,16 @@ export default function EmailSentModal({
   onClose, 
   userEmail 
 }: EmailSentModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = React.useState(false);
 
-  return (
+  React.useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
+
+  const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
@@ -102,4 +110,6 @@ export default function EmailSentModal({
       </div>
     </div>
   );
+
+  return typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

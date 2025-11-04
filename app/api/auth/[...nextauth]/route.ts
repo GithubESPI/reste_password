@@ -9,7 +9,7 @@ export const authOptions: NextAuthOptions = {
       tenantId: process.env.AZURE_AD_TENANT_ID!,
       authorization: {
         params: {
-          scope: "openid email profile User.Read User.Read.All User.ReadWrite.All Directory.AccessAsUser.All User-PasswordProfile.ReadWrite.All, Mail.Send",
+          scope: "openid email profile User.Read User.Read.All User.ReadWrite.All Directory.AccessAsUser.All User-PasswordProfile.ReadWrite.All",
         },
       },
     }),
@@ -34,12 +34,17 @@ export const authOptions: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       // Forcer la redirection vers la page de redirection
       console.log("Redirect callback:", { url, baseUrl });
-      if (url === baseUrl || url === `${baseUrl}/`) {
+      try {
+        if (url === baseUrl || url === `${baseUrl}/`) {
+          return `${baseUrl}/redirect`;
+        }
+        if (url.startsWith("/")) return `${baseUrl}${url}`;
+        else if (new URL(url).origin === baseUrl) return url;
+        return `${baseUrl}/redirect`;
+      } catch (error) {
+        console.error("Error in redirect callback:", error);
         return `${baseUrl}/redirect`;
       }
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      else if (new URL(url).origin === baseUrl) return url;
-      return `${baseUrl}/redirect`;
     },
   },
 };

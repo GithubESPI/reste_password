@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface EmailSendingAnimationProps {
   isOpen: boolean;
@@ -11,9 +12,16 @@ export default function EmailSendingAnimation({
   isOpen, 
   userEmail 
 }: EmailSendingAnimationProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = React.useState(false);
 
-  return (
+  React.useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
+
+  const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
@@ -160,4 +168,6 @@ export default function EmailSendingAnimation({
       `}</style>
     </div>
   );
+
+  return typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

@@ -2,19 +2,28 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function AuthSuccessPage() {
   const { status } = useSession();
   const router = useRouter();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
+    // Éviter les redirections multiples
+    if (hasRedirected.current) return;
+
     if (status === "authenticated") {
-      // Rediriger vers le dashboard après connexion réussie
-      router.push("/dashboard");
+      hasRedirected.current = true;
+      // Utiliser setTimeout pour éviter les conflits avec le DOM
+      setTimeout(() => {
+        router.replace("/dashboard");
+      }, 100);
     } else if (status === "unauthenticated") {
-      // Rediriger vers la page de login si non connecté
-      router.push("/login");
+      hasRedirected.current = true;
+      setTimeout(() => {
+        router.replace("/login");
+      }, 100);
     }
   }, [status, router]);
 
