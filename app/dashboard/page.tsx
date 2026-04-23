@@ -10,6 +10,7 @@ import ProfileCard from "../../components/ProfileCard";
 import SuccessModal from "../../components/SuccessModal";
 import EmailSentModal from "../../components/EmailSentModal";
 import EmailSendingAnimation from "../../components/EmailSendingAnimation";
+import LogsModal from "../../components/LogsModal";
 
 // Interfaces TypeScript
 interface User {
@@ -60,6 +61,7 @@ export default function DashboardPage() {
     isOpen: false,
     userEmail: ""
   });
+  const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -76,59 +78,20 @@ export default function DashboardPage() {
     return text.toLowerCase().includes(query.toLowerCase());
   };
 
-  // Fonction fetcher pour SWR avec pagination complète
+  // Fonction fetcher pour SWR appelant notre nouvelle API backend
   const fetcher = async (url: string) => {
-    if (!(session as SessionWithToken)?.accessToken) {
-      throw new Error('No access token');
+    if (status !== "authenticated") {
+      throw new Error('Non authentifié');
     }
     
-    let allUsers: User[] = [];
-    let nextLink: string | null = null;
-    let pageCount = 0;
-    
-    console.log('🔄 Début de la récupération de tous les utilisateurs avec pagination...');
-    
-    do {
-      const currentUrl = nextLink || url;
-      const params = nextLink ? {} : {
-        $select: "id,displayName,mail,otherMails,jobTitle,department,companyName,employeeType,createdDateTime",
-        $top: 999 // Maximum par page
-      };
-      
-      console.log(`📄 Récupération page ${pageCount + 1}...`);
-      const response: any = await axios.get(currentUrl, {
-        headers: {
-          Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
-        },
-        params: nextLink ? undefined : params
-      });
-      
-      const users = response.data.value || [];
-      allUsers = [...allUsers, ...users];
-      nextLink = response.data['@odata.nextLink'];
-      pageCount++;
-      
-      console.log(`📊 Page ${pageCount}: ${users.length} utilisateurs (Total: ${allUsers.length})`);
-      
-      // Limite de sécurité pour éviter les boucles infinies
-      if (pageCount > 50) {
-        console.warn('⚠️ Limite de pages atteinte (50), arrêt de la récupération');
-        break;
-      }
-      
-      // Délai entre les requêtes pour éviter les erreurs 429
-      if (nextLink) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    } while (nextLink);
-    
-    console.log('📊 Total utilisateurs récupérés avec pagination:', allUsers.length);
-    return allUsers;
+    console.log('🔄 Récupération des utilisateurs via API backend...');
+    const response = await axios.get(url);
+    return response.data.users || [];
   };
 
   // Utiliser SWR pour récupérer les utilisateurs
   const { data: allUsers = [], error: usersError, isLoading: usersLoading } = useSWR(
-    session?.accessToken ? `${process.env.NEXT_PUBLIC_GRAPH_API}/users` : null,
+    status === "authenticated" ? '/api/users' : null,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -205,6 +168,8 @@ export default function DashboardPage() {
     try {
       await axios.post('/api/reset-password', {
         userId,
+        userName,
+        userEmail,
         temporaryPassword
       });
 
@@ -258,11 +223,18 @@ export default function DashboardPage() {
 
   if (status === "loading" || usersLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement des utilisateurs...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-100">
+        <div className="relative">
+          <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center animate-pulse-glow">
+            <span className="text-white text-3xl">🔐</span>
+          </div>
+          <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1">
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
         </div>
+        <p className="text-gray-600 font-medium mt-8 animate-pulse">Synchronisation avec l'annuaire...</p>
       </div>
     );
   }
@@ -304,13 +276,27 @@ export default function DashboardPage() {
             </div>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
             >
               Se déconnecter
             </button>
           </div>
         </div>
       </nav>
+
+      {/* Bouton d'historique flottant ou intégré */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <button
+          onClick={() => setIsLogsModalOpen(true)}
+          className="bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 p-4 rounded-full shadow-xl hover:shadow-2xl border border-blue-100 dark:border-gray-700 transition-all transform hover:scale-105 flex items-center justify-center group"
+          title="Historique des actions"
+        >
+          <span className="text-xl">📜</span>
+          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 ease-in-out font-medium ml-0 group-hover:ml-2 opacity-0 group-hover:opacity-100">
+            Historique
+          </span>
+        </button>
+      </div>
 
       {/* Hero Section */}
       <div className="relative px-6 py-20">
@@ -393,20 +379,25 @@ export default function DashboardPage() {
                   )}
 
                   {searchResults.length > 0 && (
-                    <div className="mt-8 max-w-4xl mx-auto">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <div className="mt-12 w-full animate-fade-in">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 text-left border-b pb-2">
                         Étudiants trouvés ({searchResults.length})
                       </h3>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {searchResults.map((student: User) => (
-                          <ProfileCard 
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 place-items-stretch">
+                        {searchResults.map((student: User, index: number) => (
+                          <div 
                             key={student.id} 
-                            user={student} 
-                            onPasswordReset={(userId, userName, temporaryPassword) => 
-                              handlePasswordReset(userId, userName, temporaryPassword, student.otherMails?.[0] || student.mail)
-                            }
-                          />
+                            className="transform transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl opacity-0 animate-slide-up"
+                            style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+                          >
+                            <ProfileCard 
+                              user={student} 
+                              onPasswordReset={(userId, userName, temporaryPassword) => 
+                                handlePasswordReset(userId, userName, temporaryPassword, student.otherMails?.[0] || student.mail)
+                              }
+                            />
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -462,9 +453,15 @@ export default function DashboardPage() {
       />
 
       {/* Animation d'envoi d'email */}
-      <EmailSendingAnimation
-        isOpen={emailSendingAnimation.isOpen}
-        userEmail={emailSendingAnimation.userEmail}
+      <EmailSendingAnimation 
+        isOpen={emailSendingAnimation.isOpen} 
+        userEmail={emailSendingAnimation.userEmail} 
+      />
+
+      {/* Logs Modal */}
+      <LogsModal
+        isOpen={isLogsModalOpen}
+        onClose={() => setIsLogsModalOpen(false)}
       />
     </div>
   );

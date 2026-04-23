@@ -1,0 +1,22 @@
+[
+  {
+    "action": "RESET_PASSWORD",
+    "targetUserId": "ef5f6144-0eed-43b9-a307-c4258e091273",
+    "targetUserName": "AICHA HAMON",
+    "targetUserEmail": "aicha.hamon822@gmail.com",
+    "performedByEmail": "dev.espi@groupe-espi.fr",
+    "performedByName": "dev espi",
+    "id": "j0968qin01",
+    "timestamp": "2026-04-23T09:38:25.720Z"
+  },
+  {
+    "action": "RESET_PASSWORD",
+    "targetUserId": "ef5f6144-0eed-43b9-a307-c4258e091273",
+    "targetUserName": "AICHA HAMON",
+    "targetUserEmail": "aicha.hamon822@gmail.com",
+    "performedByEmail": "s.litie@groupe-espi.fr",
+    "performedByName": "Souley LITIE",
+    "id": "t6s3evppw9",
+    "timestamp": "2026-04-23T09:11:42.253Z"
+  }
+]

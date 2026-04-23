@@ -146,8 +146,8 @@ export default function ProfileCard({ user, onPasswordReset }: ProfileCardProps)
               {user.signInActivity?.lastSignInDateTime && (
                 <div className="bg-gray-800 rounded-lg p-3">
                   <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-gray-400 text-sm">🔐</span>
-                    <span className="text-gray-400 text-sm">Dernière connexion</span>
+                    <span className="text-green-400 text-sm">🟢</span>
+                    <span className="text-green-400 text-sm font-medium">Dernière connexion</span>
                   </div>
                   <div className="text-white font-medium text-sm">
                     {new Date(user.signInActivity.lastSignInDateTime).toLocaleDateString('fr-FR', {

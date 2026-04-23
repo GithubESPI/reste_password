@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../lib/auth';
+import { addLog } from '../../../lib/logger';
 import axios from 'axios';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, temporaryPassword } = await request.json();
+    const { userId, userName, userEmail, temporaryPassword } = await request.json();
 
     if (!userId || !temporaryPassword) {
       return NextResponse.json(
@@ -71,6 +72,16 @@ export async function POST(request: NextRequest) {
         }
       }
     );
+
+    // Enregistrer l'action dans les logs
+    addLog({
+      action: 'RESET_PASSWORD',
+      targetUserId: userId,
+      targetUserName: userName || 'Utilisateur inconnu',
+      targetUserEmail: userEmail,
+      performedByEmail: session.user.email,
+      performedByName: session.user.name || session.user.email,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
