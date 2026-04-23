@@ -202,27 +202,11 @@ export default function DashboardPage() {
 
 
   const handlePasswordReset = async (userId: string, userName: string, temporaryPassword: string, userEmail?: string) => {
-    if (!(session as SessionWithToken)?.accessToken) {
-      alert("Erreur: Token d'accès non disponible");
-      return;
-    }
-
     try {
-      await axios.patch(
-        `${process.env.NEXT_PUBLIC_GRAPH_API}/users/${userId}`,
-        {
-          passwordProfile: {
-            password: temporaryPassword,
-            forceChangePasswordNextSignIn: true
-          }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${(session as SessionWithToken).accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      await axios.post('/api/reset-password', {
+        userId,
+        temporaryPassword
+      });
 
       // Afficher la modal de succès
       setSuccessModal({
@@ -234,9 +218,9 @@ export default function DashboardPage() {
     } catch (error: unknown) {
       console.error("Erreur lors de la réinitialisation du mot de passe:", error);
       if ((error as { response?: { status?: number } }).response?.status === 403) {
-        alert(`❌ Permissions insuffisantes pour réinitialiser le mot de passe.\n\n🔧 Actions requises :\n1. Contactez votre administrateur Azure AD\n2. Demandez l'approbation des permissions suivantes :\n   • User.ReadWrite.All\n   • Directory.AccessAsUser.All\n   • User-PasswordProfile.ReadWrite.All\n\n3. L'administrateur doit approuver ces permissions dans Azure Portal\n4. Reconnectez-vous après l'approbation`);
+        alert(`❌ Permissions insuffisantes côté application pour réinitialiser le mot de passe.\n\n🔧 Actions requises :\nAssurez-vous que l'application Azure AD possède la permission de type 'Application' (et non Déléguée) pour User-PasswordProfile.ReadWrite.All et qu'elle est approuvée par l'administrateur.`);
       } else {
-        alert(`Erreur lors de la réinitialisation du mot de passe: ${(error as { response?: { data?: { error?: { message?: string } } }; message?: string }).response?.data?.error?.message || (error as { message?: string }).message}`);
+        alert(`Erreur lors de la réinitialisation du mot de passe: ${(error as { response?: { data?: { error?: string } } }).response?.data?.error || (error as { message?: string }).message}`);
       }
       throw error; // Re-throw pour que la modal puisse gérer l'erreur
     }
