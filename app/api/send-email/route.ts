@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendPasswordResetEmailWithHiddenSender } from '../../../lib/emailService';
+import { sendPasswordResetEmailWithHiddenSender, sendEmailViaGraphApplication } from '../../../lib/emailService';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../lib/auth';
 
@@ -29,16 +29,34 @@ export async function POST(request: NextRequest) {
     console.log(`Email de secours: ${userEmail}`);
     console.log(`Utilisateur: ${userName}`);
     console.log(`Mot de passe temporaire: ${temporaryPassword}`);
-    console.log(`Expéditeur: dev.espi@groupe-espi.fr`);
+    console.log(`Expéditeur: ${process.env.SMTP_FROM || 'dev.espi@groupe-espi.fr'}`);
     console.log(`Utilisateur connecté: ${session.user.email}`);
     console.log('===============================');
 
-    // Envoi de l'email via SMTP avec expéditeur masqué
-    const emailResult = await sendPasswordResetEmailWithHiddenSender({
-      userName,
-      temporaryPassword,
-      userEmail
-    });
+    const emailMethod = process.env.EMAIL_METHOD || 'SMTP';
+    const senderEmail = process.env.SMTP_FROM || 'dev.espi@groupe-espi.fr';
+
+    console.log('=== PROCESSUS D\'ENVOI DE L\'EMAIL ===');
+    console.log('Méthode d\'envoi :', emailMethod);
+    console.log('Destinataire :', userEmail);
+    console.log('Expéditeur :', senderEmail);
+    console.log('====================================');
+
+    // Envoi de l'email selon la méthode configurée
+    let emailResult;
+    if (emailMethod.toUpperCase() === 'GRAPH') {
+      emailResult = await sendEmailViaGraphApplication({
+        userName,
+        temporaryPassword,
+        userEmail
+      });
+    } else {
+      emailResult = await sendPasswordResetEmailWithHiddenSender({
+        userName,
+        temporaryPassword,
+        userEmail
+      });
+    }
 
     console.log('=== RÉSULTAT DE L\'ENVOI ===');
     console.log('Message ID:', emailResult.messageId);
@@ -51,7 +69,7 @@ export async function POST(request: NextRequest) {
       data: {
         recipient: userEmail,
         userName,
-        sender: 'dev.espi@groupe-espi.fr', // Expéditeur masqué
+        sender: senderEmail,
         subject: 'Réinitialisation de votre mot de passe - Groupe ESPI',
         messageId: emailResult.messageId,
         sentAt: new Date().toISOString(),

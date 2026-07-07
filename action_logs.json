@@ -1,6 +1,36 @@
 [
   {
     "action": "RESET_PASSWORD",
+    "targetUserId": "9725836e-7dcb-4383-82fd-77ca0a2f1cf9",
+    "targetUserName": "Alice BARON",
+    "targetUserEmail": "baronalice650@gmail.com",
+    "performedByEmail": "s.litie@groupe-espi.fr",
+    "performedByName": "Souley LITIE",
+    "id": "8zb1f53dfrp",
+    "timestamp": "2026-07-07T10:39:57.153Z"
+  },
+  {
+    "action": "RESET_PASSWORD",
+    "targetUserId": "9725836e-7dcb-4383-82fd-77ca0a2f1cf9",
+    "targetUserName": "Alice BARON",
+    "targetUserEmail": "baronalice650@gmail.com",
+    "performedByEmail": "s.litie@groupe-espi.fr",
+    "performedByName": "Souley LITIE",
+    "id": "1yjykerzw0v",
+    "timestamp": "2026-07-07T10:35:55.625Z"
+  },
+  {
+    "action": "RESET_PASSWORD",
+    "targetUserId": "9725836e-7dcb-4383-82fd-77ca0a2f1cf9",
+    "targetUserName": "Alice BARON",
+    "targetUserEmail": "baronalice650@gmail.com",
+    "performedByEmail": "s.litie@groupe-espi.fr",
+    "performedByName": "Souley LITIE",
+    "id": "2potb1sfqyl",
+    "timestamp": "2026-07-07T10:31:14.184Z"
+  },
+  {
+    "action": "RESET_PASSWORD",
     "targetUserId": "ef5f6144-0eed-43b9-a307-c4258e091273",
     "targetUserName": "AICHA HAMON",
     "targetUserEmail": "aicha.hamon822@gmail.com",

@@ -1,15 +1,21 @@
-# Configuration SMTP pour l'envoi d'emails
+# Configuration pour l'envoi d'emails (SMTP / Graph API)
 
 ## Variables d'environnement requises
 
 Ajoutez ces variables à votre fichier `.env` :
 
 ```env
-# Configuration SMTP Office 365
+# Méthode d'envoi : 'SMTP' ou 'GRAPH'
+EMAIL_METHOD=GRAPH
+
+# Adresse d'expéditeur (ex: boîte partagée sans mot de passe)
+SMTP_FROM=DSIT-2SRT@groupe-espi.fr
+
+# --- Configuration SMTP Office 365 (requise si EMAIL_METHOD=SMTP) ---
 SMTP_HOST=smtp.office365.com
 SMTP_PORT=587
 SMTP_USER=dev.espi@groupe-espi.fr
-SMTP_PASS=espi2077*
+SMTP_PASS=votre_mot_de_passe
 ```
 
 ## Configuration du service
