@@ -214,10 +214,11 @@ export default function DashboardPage() {
       } else {
         alert('❌ Erreur lors de l\'envoi de l\'email de secours');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors de l\'envoi de l\'email:', error);
       setEmailSendingAnimation({ isOpen: false, userEmail: "" });
-      alert('❌ Erreur lors de l\'envoi de l\'email');
+      const errorMessage = error.response?.data?.error || error.message || "Erreur inconnue";
+      alert(`❌ Erreur lors de l'envoi de l'email : ${errorMessage}`);
     }
   };
 

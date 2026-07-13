@@ -1,6 +1,16 @@
 [
   {
     "action": "RESET_PASSWORD",
+    "targetUserId": "73941156-f778-4285-b42c-a63ea45558db",
+    "targetUserName": "ALEXIS SIMON",
+    "targetUserEmail": "aos15@orange.fr",
+    "performedByEmail": "s.litie@groupe-espi.fr",
+    "performedByName": "Souley LITIE",
+    "id": "4owciir1mqm",
+    "timestamp": "2026-07-13T08:34:03.582Z"
+  },
+  {
+    "action": "RESET_PASSWORD",
     "targetUserId": "9725836e-7dcb-4383-82fd-77ca0a2f1cf9",
     "targetUserName": "Alice BARON",
     "targetUserEmail": "baronalice650@gmail.com",
