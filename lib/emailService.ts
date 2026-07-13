@@ -12,7 +12,8 @@ const createTransporter = (userEmail?: string, userPassword?: string) => {
       pass: userPassword || process.env.SMTP_PASS 
     },
     tls: {
-      ciphers: 'SSLv3',
+      ciphers: 'HIGH',
+      minVersion: 'TLSv1.2' as const,
       rejectUnauthorized: false
     },
     debug: true, // Active les logs de débogage SMTP
@@ -351,9 +352,9 @@ export const sendPasswordResetEmailWithHiddenSender = async (data: EmailData) =>
   try {
     await transporter.verify();
     console.log('✅ Connexion SMTP vérifiée avec succès');
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erreur de connexion SMTP:', error);
-    throw new Error('Impossible de se connecter au serveur SMTP');
+    throw new Error(`Impossible de se connecter au serveur SMTP: ${error.message || error}`);
   }
   
   const emailTemplate = `
