@@ -1,1 +1,1 @@
-npx next start
+node --max-http-header-size=65536 server.js

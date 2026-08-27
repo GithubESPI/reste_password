@@ -4,14 +4,43 @@ import { signIn } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
+// Fonction de nettoyage automatique des anciens cookies volumineux et fragmentés (chunks)
+function clearLegacyAuthCookies() {
+  if (typeof document === "undefined") return;
+
+  const cookies = document.cookie.split(";");
+  const expireDate = "Thu, 01 Jan 1970 00:00:01 GMT";
+  const domain = window.location.hostname;
+
+  for (const cookie of cookies) {
+    const eqPos = cookie.indexOf("=");
+    const rawName = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+
+    if (
+      rawName.includes("next-auth") ||
+      rawName.includes("__Secure-next-auth") ||
+      rawName.includes("__Host-next-auth")
+    ) {
+      // Effacer sur le chemin racine et sous-chemins
+      document.cookie = `${rawName}=; Path=/; Expires=${expireDate};`;
+      document.cookie = `${rawName}=; Path=/; Domain=${domain}; Expires=${expireDate};`;
+      document.cookie = `${rawName}=; Path=/api/auth; Expires=${expireDate};`;
+    }
+  }
+}
+
 export default function LoginForm() {
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     setIsHydrated(true);
+    // Purge préventive à l'affichage de la page de login
+    clearLegacyAuthCookies();
   }, []);
 
   const handleAzureLogin = () => {
+    // Nettoyer les anciens cookies de session avant d'initier une nouvelle authentification
+    clearLegacyAuthCookies();
     signIn("azure-ad", { callbackUrl: "/dashboard" });
   };
 
@@ -57,7 +86,7 @@ export default function LoginForm() {
           <div className="space-y-4">
             <button
               onClick={handleAzureLogin}
-              className="w-full flex justify-center items-center px-6 py-4 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md transition-all duration-200 font-semibold text-lg group"
+              className="w-full flex justify-center items-center px-6 py-4 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md transition-all duration-200 font-semibold text-lg group cursor-pointer"
             >
               <svg className="w-6 h-6 mr-3 transform group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                 <path fill="#F25022" d="M1 1h10v10H1z"/>

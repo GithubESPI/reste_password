@@ -4,7 +4,7 @@ const next = require("next");
 const fs = require("fs");
 const path = require("path");
 
-// Programmatic fallback to load env variables from local .env file in iisnode/production environments
+// Programmatic fallback to load env variables from local .env file
 try {
   const envPath = path.join(__dirname, ".env");
   if (fs.existsSync(envPath)) {
@@ -38,21 +38,12 @@ const handle = app.getRequestHandler();
 const port = process.env.PORT || 3000;
 
 app.prepare().then(() => {
-  createServer((req, res) => {
-    // Be sure to pass `true` as the second argument to `url.parse`.
-    // This tells it to parse the query portion of the URL.
+  // maxHeaderSize: 65536 (64 KB) empêche l'erreur HTTP 431 (Request Header Fields Too Large)
+  createServer({ maxHeaderSize: 65536 }, (req, res) => {
     const parsedUrl = parse(req.url, true);
-    const { pathname, query } = parsedUrl;
-
-    if (pathname === "/a") {
-      app.render(req, res, "/a", query);
-    } else if (pathname === "/b") {
-      app.render(req, res, "/b", query);
-    } else {
-      handle(req, res, parsedUrl);
-    }
+    handle(req, res, parsedUrl);
   }).listen(port, (err) => {
     if (err) throw err;
-    console.log("> Ready on http://localhost:", port);
+    console.log("> Ready on http://localhost:" + port);
   });
 });

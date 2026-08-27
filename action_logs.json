@@ -6,6 +6,16 @@
     "targetUserEmail": "aicha.hamon822@gmail.com",
     "performedByEmail": "s.litie@groupe-espi.fr",
     "performedByName": "Souley LITIE",
+    "id": "1729aed4-9863-4692-8407-fd4d3f4de876",
+    "timestamp": "2026-08-27T09:27:32.237Z"
+  },
+  {
+    "action": "RESET_PASSWORD",
+    "targetUserId": "ef5f6144-0eed-43b9-a307-c4258e091273",
+    "targetUserName": "AICHA HAMON",
+    "targetUserEmail": "aicha.hamon822@gmail.com",
+    "performedByEmail": "s.litie@groupe-espi.fr",
+    "performedByName": "Souley LITIE",
     "id": "51c114ec-8ae2-442c-9dda-eb58e6a7dee9",
     "timestamp": "2026-08-27T09:13:35.131Z"
   },

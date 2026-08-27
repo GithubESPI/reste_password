@@ -3,12 +3,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
+export interface LastResetInfo {
+  timestamp: string;
+  performedByName: string;
+  performedByEmail: string;
+}
+
 interface PasswordResetModalProps {
   isOpen: boolean;
   onClose: () => void;
   userName: string;
   onConfirm: (temporaryPassword: string) => void;
   isLoading?: boolean;
+  lastResetInfo?: LastResetInfo | null;
 }
 
 // Fonction pure de génération cryptographique sécurisée (CSPRNG)
@@ -17,9 +24,9 @@ function createSecurePassword(): string {
     return 'Espi2026!Secure';
   }
 
-  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Exclut 'I' et 'O' ambigus
-  const lower = 'abcdefghjkmnpqrstuvwxyz'; // Exclut 'l' et 'o' ambigus
-  const digits = '23456789';              // Exclut '0' et '1' ambigus
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghjkmnpqrstuvwxyz';
+  const digits = '23456789';
   const specials = '!@#$%&*+=-';
   const allChars = upper + lower + digits + specials;
 
@@ -62,7 +69,8 @@ export default function PasswordResetModal({
   onClose, 
   userName, 
   onConfirm, 
-  isLoading = false 
+  isLoading = false,
+  lastResetInfo
 }: PasswordResetModalProps) {
   const [temporaryPassword, setTemporaryPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -74,7 +82,7 @@ export default function PasswordResetModal({
     return () => setMounted(false);
   }, []);
 
-  // Génération du mot de passe uniquement à l'ouverture de la modale (sans boucle de re-render)
+  // Génération du mot de passe uniquement à l'ouverture de la modale
   useEffect(() => {
     if (isOpen) {
       setTemporaryPassword(createSecurePassword());
@@ -82,7 +90,6 @@ export default function PasswordResetModal({
     }
   }, [isOpen]);
 
-  // Bouton dé (🎲) pour regénérer un nouveau mot de passe
   const handleRegeneratePassword = () => {
     setIsRolling(true);
     setTemporaryPassword(createSecurePassword());
@@ -143,19 +150,45 @@ export default function PasswordResetModal({
         {/* Content */}
         <div className="p-4 sm:p-6">
           <div className="mb-6">
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
-              <div className="flex items-start space-x-3">
-                <span className="text-yellow-600 dark:text-yellow-400 text-lg">⚠️</span>
-                <div>
-                  <h3 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-1 text-sm">
-                    Confirmation requise
-                  </h3>
-                  <p className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300">
-                    Vous êtes sur le point de réinitialiser le mot de passe pour <strong>{userName}</strong>.
-                  </p>
+            {/* Alerte si le mot de passe a déjà été réinitialisé par un autre utilisateur */}
+            {lastResetInfo ? (
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl p-3.5 mb-4 shadow-sm">
+                <div className="flex items-start space-x-2.5">
+                  <span className="text-amber-600 dark:text-amber-400 text-lg">⚠️</span>
+                  <div className="text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                    <strong className="block mb-1 font-semibold text-amber-800 dark:text-amber-300">
+                      Attention : Action récente détectée
+                    </strong>
+                    <p className="leading-relaxed">
+                      Ce mot de passe a déjà été réinitialisé le{' '}
+                      <strong>
+                        {new Date(lastResetInfo.timestamp).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: 'long',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </strong>{' '}
+                      par <span className="font-semibold">{lastResetInfo.performedByName}</span>.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+                <div className="flex items-start space-x-3">
+                  <span className="text-yellow-600 dark:text-yellow-400 text-lg">⚠️</span>
+                  <div>
+                    <h3 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-1 text-sm">
+                      Confirmation requise
+                    </h3>
+                    <p className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300">
+                      Vous êtes sur le point de réinitialiser le mot de passe pour <strong>{userName}</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-4">
               <div>
@@ -200,7 +233,7 @@ export default function PasswordResetModal({
                   <div className="text-xs sm:text-sm text-blue-800 dark:text-blue-200">
                     <strong>Après la réinitialisation :</strong>
                     <ul className="list-disc list-inside mt-1 space-y-1">
-                      <li>L&apos;étudiant sera invité à définir son propre mot de passe lors de sa première connexion</li>
+                      <li>L&apos;étudiant sera invité à définir son propre mot de passe à sa connexion</li>
                       <li>Le mot de passe temporaire sera à usage unique</li>
                     </ul>
                   </div>
@@ -231,7 +264,7 @@ export default function PasswordResetModal({
               ) : (
                 <>
                   <span>🔐</span>
-                  <span>Confirmer la réinitialisation</span>
+                  <span>{lastResetInfo ? 'Confirmer quand même' : 'Confirmer la réinitialisation'}</span>
                 </>
               )}
             </button>
