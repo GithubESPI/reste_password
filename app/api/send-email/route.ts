@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Récupérer la session de l'utilisateur connecté (pour logging uniquement)
+    // Récupérer la session de l'utilisateur connecté
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -24,15 +24,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Envoi réel de l'email via SMTP avec identifiants fixes
-    console.log('=== ENVOI D\'EMAIL VIA SMTP ===');
-    console.log(`Email de secours: ${userEmail}`);
-    console.log(`Utilisateur: ${userName}`);
-    console.log(`Mot de passe temporaire: ${temporaryPassword}`);
-    console.log(`Expéditeur: ${process.env.SMTP_FROM || 'dev.espi@groupe-espi.fr'}`);
-    console.log(`Utilisateur connecté: ${session.user.email}`);
-    console.log('===============================');
-
     const emailMethod = process.env.EMAIL_METHOD || 'SMTP';
     const senderEmail = process.env.SMTP_FROM || 'dev.espi@groupe-espi.fr';
 
@@ -40,6 +31,7 @@ export async function POST(request: NextRequest) {
     console.log('Méthode d\'envoi :', emailMethod);
     console.log('Destinataire :', userEmail);
     console.log('Expéditeur :', senderEmail);
+    console.log('Effectué par :', session.user.email);
     console.log('====================================');
 
     // Envoi de l'email selon la méthode configurée avec un mécanisme de fallback automatique
@@ -55,7 +47,7 @@ export async function POST(request: NextRequest) {
           userEmail
         });
       } catch (graphError: any) {
-        console.warn('⚠️ Echec de l\'envoi principal via GRAPH. Tentative de fallback SMTP...', graphError.message || graphError);
+        console.warn('⚠️ Échec de l\'envoi principal via GRAPH. Tentative de fallback SMTP...', graphError.message || graphError);
         errors.push(`GRAPH: ${graphError.message || graphError}`);
         try {
           emailResult = await sendPasswordResetEmailWithHiddenSender({
@@ -66,7 +58,7 @@ export async function POST(request: NextRequest) {
           fallbackUsed = true;
           console.log('✅ Envoi réussi via fallback SMTP');
         } catch (smtpError: any) {
-          console.error('❌ Echec du fallback SMTP également.', smtpError.message || smtpError);
+          console.error('❌ Échec du fallback SMTP également.', smtpError.message || smtpError);
           errors.push(`SMTP: ${smtpError.message || smtpError}`);
           throw new Error(`Tous les modes d'envoi d'email ont échoué. Détails : [${errors.join(' | ')}]`);
         }
@@ -79,7 +71,7 @@ export async function POST(request: NextRequest) {
           userEmail
         });
       } catch (smtpError: any) {
-        console.warn('⚠️ Echec de l\'envoi principal via SMTP. Tentative de fallback GRAPH...', smtpError.message || smtpError);
+        console.warn('⚠️ Échec de l\'envoi principal via SMTP. Tentative de fallback GRAPH...', smtpError.message || smtpError);
         errors.push(`SMTP: ${smtpError.message || smtpError}`);
         try {
           emailResult = await sendEmailViaGraphApplication({
@@ -90,7 +82,7 @@ export async function POST(request: NextRequest) {
           fallbackUsed = true;
           console.log('✅ Envoi réussi via fallback GRAPH');
         } catch (graphError: any) {
-          console.error('❌ Echec du fallback GRAPH également.', graphError.message || graphError);
+          console.error('❌ Échec du fallback GRAPH également.', graphError.message || graphError);
           errors.push(`GRAPH: ${graphError.message || graphError}`);
           throw new Error(`Tous les modes d'envoi d'email ont échoué. Détails : [${errors.join(' | ')}]`);
         }

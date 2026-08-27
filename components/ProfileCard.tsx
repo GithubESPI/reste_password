@@ -221,14 +221,17 @@ export default function ProfileCard({ user, onPasswordReset }: ProfileCardProps)
         </div>
       </MagicContainer>
       
-      {/* Modal de réinitialisation de mot de passe */}
-      <PasswordResetModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        userName={user.displayName || user.mail || 'Utilisateur'}
-        onConfirm={handlePasswordReset}
-        isLoading={isResetting}
-      />
+      {/* Modal de réinitialisation de mot de passe (monté uniquement à l'ouverture pour des performances optimales) */}
+      {isModalOpen && (
+        <PasswordResetModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          userName={user.displayName || user.mail || 'Utilisateur'}
+          onConfirm={handlePasswordReset}
+          isLoading={isResetting}
+        />
+      )}
     </div>
   );
 }
+

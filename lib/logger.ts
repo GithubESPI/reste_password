@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 export interface LogEntry {
   id: string;
@@ -33,11 +34,11 @@ export const addLog = (
   
   const newLog: LogEntry = {
     ...logData,
-    id: Math.random().toString(36).substring(2, 15),
+    id: crypto.randomUUID(),
     timestamp: new Date().toISOString(),
   };
 
-  // Ajouter au début et garder seulement les 500 derniers
+  // Ajouter au début et conserver au maximum les 500 derniers
   const updatedLogs = [newLog, ...logs].slice(0, 500);
 
   try {
@@ -48,3 +49,4 @@ export const addLog = (
 
   return newLog;
 };
+

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../lib/auth';
 import { addLog } from '../../../lib/logger';
+import { getGraphAccessToken } from '../../../lib/graphToken';
 import axios from 'axios';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Vérifier la session de l'utilisateur connecté (seuls les utilisateurs connectés peuvent réinitialiser)
+    // Vérifier la session de l'utilisateur connecté
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -26,39 +27,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tenantId = process.env.AZURE_AD_TENANT_ID;
-    const clientId = process.env.AZURE_AD_CLIENT_ID;
-    const clientSecret = process.env.AZURE_AD_CLIENT_SECRET;
+    // 1. Obtenir le token d'application depuis le cache partagé
+    const accessToken = await getGraphAccessToken();
 
-    if (!tenantId || !clientId || !clientSecret) {
-      console.error('Configuration Azure AD manquante');
-      return NextResponse.json(
-        { error: 'Erreur de configuration serveur' },
-        { status: 500 }
-      );
-    }
-
-    // 1. Obtenir un token d'application (Client Credentials Flow)
-    const tokenResponse = await axios.post(
-      `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
-      new URLSearchParams({
-        client_id: clientId,
-        scope: 'https://graph.microsoft.com/.default',
-        client_secret: clientSecret,
-        grant_type: 'client_credentials',
-      }).toString(),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    );
-
-    const accessToken = tokenResponse.data.access_token;
-
-    // 2. Utiliser le token d'application pour réinitialiser le mot de passe
+    // 2. Réinitialiser le mot de passe via Microsoft Graph
+    const graphBaseUrl = process.env.NEXT_PUBLIC_GRAPH_API || 'https://graph.microsoft.com/v1.0';
     await axios.patch(
-      `https://graph.microsoft.com/v1.0/users/${userId}`,
+      `${graphBaseUrl}/users/${userId}`,
       {
         passwordProfile: {
           password: temporaryPassword,
@@ -69,11 +44,12 @@ export async function POST(request: NextRequest) {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 15000,
       }
     );
 
-    // Enregistrer l'action dans les logs
+    // 3. Enregistrer l'action dans le journal d'audit
     addLog({
       action: 'RESET_PASSWORD',
       targetUserId: userId,
@@ -83,14 +59,15 @@ export async function POST(request: NextRequest) {
       performedByName: session.user.name || session.user.email,
     });
 
+    console.log(`✅ Mot de passe réinitialisé avec succès pour l'utilisateur ID: ${userId}`);
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Erreur lors de la réinitialisation du mot de passe (API):', error.response?.data || error.message);
     
-    // Renvoyer l'erreur spécifique de Graph API si disponible
     if (error.response?.status === 403) {
       return NextResponse.json(
-        { error: 'L\'application n\'a pas les permissions suffisantes (Application permissions) pour réinitialiser le mot de passe.' },
+        { error: "L'application n'a pas les permissions suffisantes (User-PasswordProfile.ReadWrite.All) dans Azure AD." },
         { status: 403 }
       );
     }

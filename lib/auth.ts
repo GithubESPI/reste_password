@@ -9,31 +9,25 @@ export const authOptions: NextAuthOptions = {
       tenantId: process.env.AZURE_AD_TENANT_ID!,
       authorization: {
         params: {
-          scope: "openid email profile User.Read User.Read.All User.ReadWrite.All Directory.AccessAsUser.All User-PasswordProfile.ReadWrite.All AuditLog.Read.All",
+          scope: "openid email profile User.Read",
         },
       },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === "development",
+  debug: false,
   pages: {
     signIn: "/login",
     error: "/login",
   },
   callbacks: {
-    async jwt({ token, account }) {
-      if (account) {
-        token.accessToken = account.access_token;
-      }
+    async jwt({ token }) {
       return token;
     },
-    async session({ session, token }) {
-      (session as { accessToken?: string }).accessToken = token.accessToken;
+    async session({ session }) {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Forcer la redirection vers la page de redirection
-      console.log("Redirect callback:", { url, baseUrl });
       try {
         if (url === baseUrl || url === `${baseUrl}/`) {
           return `${baseUrl}/redirect`;
@@ -41,8 +35,7 @@ export const authOptions: NextAuthOptions = {
         if (url.startsWith("/")) return `${baseUrl}${url}`;
         else if (new URL(url).origin === baseUrl) return url;
         return `${baseUrl}/redirect`;
-      } catch (error) {
-        console.error("Error in redirect callback:", error);
+      } catch {
         return `${baseUrl}/redirect`;
       }
     },
