@@ -5,6 +5,7 @@ export interface DirectoryUser {
   id: string;
   displayName?: string;
   mail?: string;
+  userPrincipalName?: string;
   otherMails?: string[];
   jobTitle?: string;
   department?: string;
@@ -68,7 +69,7 @@ export async function getCachedUsers(forceRefresh: boolean = false): Promise<{ u
       let allUsers: DirectoryUser[] = [];
       
       // Sélection précise des champs nécessaires pour maximiser la vitesse de réponse de Graph
-      const selectFields = 'id,displayName,mail,otherMails,jobTitle,department,companyName,employeeType,createdDateTime,signInActivity';
+      const selectFields = 'id,displayName,mail,userPrincipalName,otherMails,jobTitle,department,companyName,employeeType,createdDateTime,signInActivity';
       let nextLink: string | null = `${graphBaseUrl}/users?$select=${selectFields}&$top=999`;
       let pageCount = 0;
 

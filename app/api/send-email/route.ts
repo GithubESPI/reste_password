@@ -5,7 +5,8 @@ import { authOptions } from '../../../lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userName, temporaryPassword, userEmail } = await request.json();
+    const { userName, temporaryPassword, userEmail, studentEspiEmail, espiEmail } = await request.json();
+    const loginEmail = studentEspiEmail || espiEmail || userEmail;
 
     if (!userName || !temporaryPassword || !userEmail) {
       return NextResponse.json(
@@ -29,7 +30,8 @@ export async function POST(request: NextRequest) {
 
     console.log('=== PROCESSUS D\'ENVOI DE L\'EMAIL ===');
     console.log('Méthode d\'envoi :', emailMethod);
-    console.log('Destinataire :', userEmail);
+    console.log('Destinataire (boîte de réception) :', userEmail);
+    console.log('Identifiant étudiant (ESPI) :', loginEmail);
     console.log('Expéditeur :', senderEmail);
     console.log('Effectué par :', session.user.email);
     console.log('====================================');
@@ -44,7 +46,8 @@ export async function POST(request: NextRequest) {
         emailResult = await sendEmailViaGraphApplication({
           userName,
           temporaryPassword,
-          userEmail
+          userEmail,
+          studentEspiEmail: loginEmail
         });
       } catch (graphError: any) {
         console.warn('⚠️ Échec de l\'envoi principal via GRAPH. Tentative de fallback SMTP...', graphError.message || graphError);
@@ -53,7 +56,8 @@ export async function POST(request: NextRequest) {
           emailResult = await sendPasswordResetEmailWithHiddenSender({
             userName,
             temporaryPassword,
-            userEmail
+            userEmail,
+            studentEspiEmail: loginEmail
           });
           fallbackUsed = true;
           console.log('✅ Envoi réussi via fallback SMTP');
@@ -68,7 +72,8 @@ export async function POST(request: NextRequest) {
         emailResult = await sendPasswordResetEmailWithHiddenSender({
           userName,
           temporaryPassword,
-          userEmail
+          userEmail,
+          studentEspiEmail: loginEmail
         });
       } catch (smtpError: any) {
         console.warn('⚠️ Échec de l\'envoi principal via SMTP. Tentative de fallback GRAPH...', smtpError.message || smtpError);
@@ -77,7 +82,8 @@ export async function POST(request: NextRequest) {
           emailResult = await sendEmailViaGraphApplication({
             userName,
             temporaryPassword,
-            userEmail
+            userEmail,
+            studentEspiEmail: loginEmail
           });
           fallbackUsed = true;
           console.log('✅ Envoi réussi via fallback GRAPH');
@@ -100,6 +106,7 @@ export async function POST(request: NextRequest) {
       message: 'Email envoyé avec succès',
       data: {
         recipient: userEmail,
+        studentEspiEmail: loginEmail,
         userName,
         sender: senderEmail,
         subject: 'Réinitialisation de votre mot de passe - Groupe ESPI',

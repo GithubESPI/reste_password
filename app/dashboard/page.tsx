@@ -30,11 +30,18 @@ export default function DashboardPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [isManuallyRefreshing, setIsManuallyRefreshing] = useState(false);
 
-  const [successModal, setSuccessModal] = useState({
+  const [successModal, setSuccessModal] = useState<{
+    isOpen: boolean;
+    userName: string;
+    temporaryPassword: string;
+    userEmail: string;
+    studentEspiEmail?: string;
+  }>({
     isOpen: false,
     userName: "",
     temporaryPassword: "",
-    userEmail: ""
+    userEmail: "",
+    studentEspiEmail: ""
   });
   const [emailSentModal, setEmailSentModal] = useState({
     isOpen: false,
@@ -207,7 +214,13 @@ export default function DashboardPage() {
     }
   }, [usersError, router]);
 
-  const handlePasswordReset = async (userId: string, userName: string, temporaryPassword: string, userEmail?: string) => {
+  const handlePasswordReset = async (
+    userId: string, 
+    userName: string, 
+    temporaryPassword: string, 
+    userEmail?: string,
+    studentEspiEmail?: string
+  ) => {
     try {
       await axios.post('/api/reset-password', {
         userId,
@@ -220,7 +233,8 @@ export default function DashboardPage() {
         isOpen: true,
         userName,
         temporaryPassword,
-        userEmail: userEmail || ""
+        userEmail: userEmail || "",
+        studentEspiEmail: studentEspiEmail || ""
       });
     } catch (error: unknown) {
       console.error("Erreur lors de la réinitialisation du mot de passe:", error);
@@ -234,15 +248,21 @@ export default function DashboardPage() {
     }
   };
 
-  const handleSendEmail = async (userName: string, temporaryPassword: string, userEmail: string) => {
-    setSuccessModal({ isOpen: false, userName: "", temporaryPassword: "", userEmail: "" });
+  const handleSendEmail = async (
+    userName: string, 
+    temporaryPassword: string, 
+    userEmail: string,
+    studentEspiEmail?: string
+  ) => {
+    setSuccessModal({ isOpen: false, userName: "", temporaryPassword: "", userEmail: "", studentEspiEmail: "" });
     setEmailSendingAnimation({ isOpen: true, userEmail });
 
     try {
       const response = await axios.post('/api/send-email', {
         userName,
         temporaryPassword,
-        userEmail
+        userEmail,
+        studentEspiEmail: studentEspiEmail || undefined
       });
 
       setEmailSendingAnimation({ isOpen: false, userEmail: "" });
@@ -522,7 +542,13 @@ export default function DashboardPage() {
                             user={student} 
                             lastResetInfo={lastReset}
                             onPasswordReset={(userId, userName, temporaryPassword) => 
-                              handlePasswordReset(userId, userName, temporaryPassword, student.otherMails?.[0] || student.mail)
+                              handlePasswordReset(
+                                userId, 
+                                userName, 
+                                temporaryPassword, 
+                                student.otherMails?.[0] || student.mail || student.userPrincipalName,
+                                student.mail || student.userPrincipalName
+                              )
                             }
                           />
                         </div>
@@ -569,10 +595,11 @@ export default function DashboardPage() {
       {/* Modal de succès */}
       <SuccessModal
         isOpen={successModal.isOpen}
-        onClose={() => setSuccessModal({ isOpen: false, userName: "", temporaryPassword: "", userEmail: "" })}
+        onClose={() => setSuccessModal({ isOpen: false, userName: "", temporaryPassword: "", userEmail: "", studentEspiEmail: "" })}
         userName={successModal.userName}
         temporaryPassword={successModal.temporaryPassword}
         userEmail={successModal.userEmail}
+        studentEspiEmail={successModal.studentEspiEmail}
         onSendEmail={handleSendEmail}
       />
 

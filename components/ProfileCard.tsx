@@ -8,6 +8,7 @@ export interface ProfileCardUser {
   id: string;
   displayName?: string;
   mail?: string;
+  userPrincipalName?: string;
   otherMails?: string[];
   jobTitle?: string;
   department?: string;

@@ -9,7 +9,8 @@ interface SuccessModalProps {
   userName: string;
   temporaryPassword: string;
   userEmail?: string;
-  onSendEmail?: (userName: string, temporaryPassword: string, userEmail: string) => void;
+  studentEspiEmail?: string;
+  onSendEmail?: (userName: string, temporaryPassword: string, userEmail: string, studentEspiEmail?: string) => void;
 }
 
 export default function SuccessModal({ 
@@ -18,6 +19,7 @@ export default function SuccessModal({
   userName, 
   temporaryPassword,
   userEmail,
+  studentEspiEmail,
   onSendEmail
 }: SuccessModalProps) {
   const [mounted, setMounted] = useState(false);
@@ -40,9 +42,9 @@ export default function SuccessModal({
 
   const handleSendEmail = useCallback(async () => {
     if (onSendEmail && userEmail) {
-      await onSendEmail(userName, temporaryPassword, userEmail);
+      await onSendEmail(userName, temporaryPassword, userEmail, studentEspiEmail);
     }
-  }, [onSendEmail, userName, temporaryPassword, userEmail]);
+  }, [onSendEmail, userName, temporaryPassword, userEmail, studentEspiEmail]);
 
   // Support touche Échap
   useEffect(() => {
@@ -147,18 +149,25 @@ export default function SuccessModal({
                 </div>
               </div>
 
-              {/* Email de secours */}
-              {userEmail && (
-                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+              {/* Identifiants & Email de réception */}
+              {(studentEspiEmail || userEmail) && (
+                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 space-y-2">
                   <div className="flex items-start space-x-3">
                     <span className="text-purple-600 dark:text-purple-400 text-sm mt-0.5">📧</span>
                     <div className="text-xs sm:text-sm text-purple-800 dark:text-purple-200 flex-1 min-w-0">
-                      <strong className="block mb-1 font-semibold">Email de secours détecté :</strong>
-                      <p className="mb-1 text-xs sm:text-sm">
-                        Adresse : <span className="font-semibold break-all text-purple-900 dark:text-purple-100">{userEmail}</span>
-                      </p>
-                      <p className="text-xs text-purple-600 dark:text-purple-400">
-                        Vous pouvez lui expédier directement ses identifiants en un clic ci-dessous.
+                      <strong className="block mb-1 font-semibold">Transmission des identifiants :</strong>
+                      {studentEspiEmail && (
+                        <p className="mb-1 text-xs sm:text-sm">
+                          Compte ESPI (Connexion) : <span className="font-semibold break-all text-blue-700 dark:text-blue-300">{studentEspiEmail}</span>
+                        </p>
+                      )}
+                      {userEmail && (
+                        <p className="mb-1 text-xs sm:text-sm">
+                          Destinataire ({userEmail !== studentEspiEmail ? 'Boîte perso' : 'Email'}) : <span className="font-semibold break-all text-purple-900 dark:text-purple-100">{userEmail}</span>
+                        </p>
+                      )}
+                      <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                        Le tutoriel pas-à-pas et le lien Microsoft 365 seront inclus dans l&apos;email.
                       </p>
                     </div>
                   </div>
