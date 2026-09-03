@@ -97,48 +97,52 @@ export default function DashboardPage() {
     }
   );
 
-  // Map des dernières réinitialisations pour un accès O(1) instantané
-  const lastResetMap = useMemo(() => {
-    const map = new Map<string, LastResetInfo>();
-    for (const log of sharedLogs) {
-      if (log.action === 'RESET_PASSWORD') {
-        const info: LastResetInfo = {
-          timestamp: log.timestamp,
-          performedByName: log.performedByName,
-          performedByEmail: log.performedByEmail,
-        };
-
-        if (log.targetUserId && !map.has(log.targetUserId)) {
-          map.set(log.targetUserId, info);
-        }
-        if (log.targetUserEmail && !map.has(log.targetUserEmail.toLowerCase())) {
-          map.set(log.targetUserEmail.toLowerCase(), info);
-        }
-      }
-    }
-    return map;
-  }, [sharedLogs]);
-
-  // Recherche optimisée de la dernière réinitialisation d'un étudiant par tous ses identifiants
+  // Récupération de la dernière réinitialisation la plus récente pour un étudiant (par ID, emails institutionnels, emails personnels ou nom)
   const getStudentLastReset = useCallback((student: ProfileCardUser): LastResetInfo | null => {
-    if (student.id && lastResetMap.has(student.id)) {
-      return lastResetMap.get(student.id)!;
-    }
-    if (student.mail && lastResetMap.has(student.mail.toLowerCase())) {
-      return lastResetMap.get(student.mail.toLowerCase())!;
-    }
-    if (student.userPrincipalName && lastResetMap.has(student.userPrincipalName.toLowerCase())) {
-      return lastResetMap.get(student.userPrincipalName.toLowerCase())!;
-    }
-    if (student.otherMails && student.otherMails.length > 0) {
-      for (const mail of student.otherMails) {
-        if (mail && lastResetMap.has(mail.toLowerCase())) {
-          return lastResetMap.get(mail.toLowerCase())!;
+    if (!sharedLogs || sharedLogs.length === 0) return null;
+
+    const studentId = student.id?.toLowerCase().trim();
+    const studentMail = student.mail?.toLowerCase().trim();
+    const studentUpn = student.userPrincipalName?.toLowerCase().trim();
+    const studentName = student.displayName?.toLowerCase().trim();
+    const otherMails = (student.otherMails || [])
+      .map((m) => m?.toLowerCase().trim())
+      .filter(Boolean);
+
+    let latestReset: LastResetInfo | null = null;
+    let latestTime = 0;
+
+    for (const log of sharedLogs) {
+      if (log.action !== 'RESET_PASSWORD') continue;
+
+      const targetId = log.targetUserId?.toLowerCase().trim();
+      const targetEmail = log.targetUserEmail?.toLowerCase().trim();
+      const targetName = log.targetUserName?.toLowerCase().trim();
+
+      // Correspondance multi-critères exhaustive
+      const isMatch =
+        (studentId && (targetId === studentId || targetEmail === studentId)) ||
+        (studentMail && (targetId === studentMail || targetEmail === studentMail)) ||
+        (studentUpn && (targetId === studentUpn || targetEmail === studentUpn)) ||
+        (targetEmail && otherMails.includes(targetEmail)) ||
+        (targetId && otherMails.includes(targetId)) ||
+        (studentName && targetName && studentName === targetName);
+
+      if (isMatch) {
+        const logTime = new Date(log.timestamp).getTime();
+        if (logTime > latestTime) {
+          latestTime = logTime;
+          latestReset = {
+            timestamp: log.timestamp,
+            performedByName: log.performedByName,
+            performedByEmail: log.performedByEmail,
+          };
         }
       }
     }
-    return null;
-  }, [lastResetMap]);
+
+    return latestReset;
+  }, [sharedLogs]);
 
   // Pré-indexation ultra-rapide des étudiants
   const indexedStudents = useMemo<IndexedStudent[]>(() => {
@@ -248,11 +252,14 @@ export default function DashboardPage() {
         temporaryPassword
       });
 
-      // Mise à jour instantanée du cache local des logs partagés (0ms de latence)
+      // Mise à jour instantanée du cache local des logs partagés (0ms de latence) avec revalidation en tâche de fond
       if (response.data?.log) {
-        mutateLogs((prevLogs) => [response.data.log, ...(prevLogs || [])], false);
+        await mutateLogs(
+          (prevLogs) => [response.data.log, ...(prevLogs || []).filter((l) => l.id !== response.data.log.id)],
+          { revalidate: true }
+        );
       } else {
-        mutateLogs();
+        await mutateLogs();
       }
 
       setSuccessModal({
@@ -296,9 +303,12 @@ export default function DashboardPage() {
       if (response.data.success) {
         // Mise à jour instantanée du journal après l'envoi de l'email
         if (response.data?.log) {
-          mutateLogs((prevLogs) => [response.data.log, ...(prevLogs || [])], false);
+          await mutateLogs(
+            (prevLogs) => [response.data.log, ...(prevLogs || []).filter((l) => l.id !== response.data.log.id)],
+            { revalidate: true }
+          );
         } else {
-          mutateLogs();
+          await mutateLogs();
         }
         setEmailSentModal({ isOpen: true, userEmail });
       } else {

@@ -1,6 +1,26 @@
 [
   {
     "action": "SEND_EMAIL",
+    "targetUserId": "aicha.hamon@groupe-espi.fr",
+    "targetUserName": "AICHA HAMON",
+    "targetUserEmail": "aicha.hamon822@gmail.com",
+    "performedByEmail": "admin@groupe-espi.fr",
+    "performedByName": "admin",
+    "id": "954f14ba-3ef1-4731-b67f-34a6178e7d7f",
+    "timestamp": "2026-09-03T09:30:28.952Z"
+  },
+  {
+    "action": "RESET_PASSWORD",
+    "targetUserId": "ef5f6144-0eed-43b9-a307-c4258e091273",
+    "targetUserName": "AICHA HAMON",
+    "targetUserEmail": "aicha.hamon822@gmail.com",
+    "performedByEmail": "admin@groupe-espi.fr",
+    "performedByName": "admin",
+    "id": "ea09689b-729a-4e93-95d8-9cb68f406503",
+    "timestamp": "2026-09-03T09:30:25.831Z"
+  },
+  {
+    "action": "SEND_EMAIL",
     "targetUserId": "sacha.mondinini@groupe-espi.fr",
     "targetUserName": "Sacha MONDININI",
     "targetUserEmail": "sachamondinini77@gmail.com",

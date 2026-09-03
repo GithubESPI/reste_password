@@ -67,7 +67,7 @@ export default function ProfileCard({ user, onPasswordReset, lastResetInfo }: Pr
       if (date.toDateString() === now.toDateString()) {
         return `Aujourd'hui à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
       }
-      return `${date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })} à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+      return `le ${date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })} à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
     } catch {
       return isoString;
     }
@@ -145,7 +145,7 @@ export default function ProfileCard({ user, onPasswordReset, lastResetInfo }: Pr
                   <span className="text-amber-400 text-base flex-shrink-0">🔑</span>
                   <div className="text-[11px] text-amber-200 leading-tight min-w-0 flex-1">
                     <span className="font-semibold text-amber-300 block truncate">
-                      Réinitialisé le {formatShortDate(lastResetInfo.timestamp)}
+                      Réinitialisé {formatShortDate(lastResetInfo.timestamp)}
                     </span>
                     <p className="text-gray-300 truncate text-[10px] mt-0.5">
                       par <span className="text-amber-100 font-medium">{lastResetInfo.performedByName}</span>

@@ -160,14 +160,20 @@ export default function PasswordResetModal({
                       Attention : Action récente détectée
                     </strong>
                     <p className="leading-relaxed">
-                      Ce mot de passe a déjà été réinitialisé le{' '}
+                      Ce mot de passe a déjà été réinitialisé{' '}
                       <strong>
-                        {new Date(lastResetInfo.timestamp).toLocaleDateString('fr-FR', {
-                          day: '2-digit',
-                          month: 'long',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {(() => {
+                          try {
+                            const date = new Date(lastResetInfo.timestamp);
+                            const now = new Date();
+                            if (date.toDateString() === now.toDateString()) {
+                              return `Aujourd'hui à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+                            }
+                            return `le ${date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })} à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+                          } catch {
+                            return lastResetInfo.timestamp;
+                          }
+                        })()}
                       </strong>{' '}
                       par <span className="font-semibold">{lastResetInfo.performedByName}</span>.
                     </p>
