@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sendPasswordResetEmailWithHiddenSender, sendEmailViaGraphApplication } from '../../../lib/emailService';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../lib/auth';
+import { addLog } from '../../../lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -101,9 +102,20 @@ export async function POST(request: NextRequest) {
     console.log('Fallback utilisé:', fallbackUsed ? 'Oui' : 'Non');
     console.log('============================');
 
+    // Enregistrer l'action d'envoi d'email dans le journal d'audit
+    const logEntry = addLog({
+      action: 'SEND_EMAIL',
+      targetUserId: loginEmail || userEmail,
+      targetUserName: userName || 'Étudiant',
+      targetUserEmail: userEmail,
+      performedByEmail: session.user.email,
+      performedByName: session.user.name || session.user.email,
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Email envoyé avec succès',
+      log: logEntry,
       data: {
         recipient: userEmail,
         studentEspiEmail: loginEmail,

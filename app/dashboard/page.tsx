@@ -88,7 +88,7 @@ export default function DashboardPage() {
   );
 
   // Synchronisation en direct de l'historique partagé (toutes les 4 secondes)
-  const { data: sharedLogs = [] } = useSWR<LogEntry[]>(
+  const { data: sharedLogs = [], mutate: mutateLogs } = useSWR<LogEntry[]>(
     status === "authenticated" ? '/api/logs' : null,
     fetcherLogs,
     {
@@ -102,24 +102,43 @@ export default function DashboardPage() {
     const map = new Map<string, LastResetInfo>();
     for (const log of sharedLogs) {
       if (log.action === 'RESET_PASSWORD') {
-        if (!map.has(log.targetUserId)) {
-          map.set(log.targetUserId, {
-            timestamp: log.timestamp,
-            performedByName: log.performedByName,
-            performedByEmail: log.performedByEmail,
-          });
+        const info: LastResetInfo = {
+          timestamp: log.timestamp,
+          performedByName: log.performedByName,
+          performedByEmail: log.performedByEmail,
+        };
+
+        if (log.targetUserId && !map.has(log.targetUserId)) {
+          map.set(log.targetUserId, info);
         }
         if (log.targetUserEmail && !map.has(log.targetUserEmail.toLowerCase())) {
-          map.set(log.targetUserEmail.toLowerCase(), {
-            timestamp: log.timestamp,
-            performedByName: log.performedByName,
-            performedByEmail: log.performedByEmail,
-          });
+          map.set(log.targetUserEmail.toLowerCase(), info);
         }
       }
     }
     return map;
   }, [sharedLogs]);
+
+  // Recherche optimisée de la dernière réinitialisation d'un étudiant par tous ses identifiants
+  const getStudentLastReset = useCallback((student: ProfileCardUser): LastResetInfo | null => {
+    if (student.id && lastResetMap.has(student.id)) {
+      return lastResetMap.get(student.id)!;
+    }
+    if (student.mail && lastResetMap.has(student.mail.toLowerCase())) {
+      return lastResetMap.get(student.mail.toLowerCase())!;
+    }
+    if (student.userPrincipalName && lastResetMap.has(student.userPrincipalName.toLowerCase())) {
+      return lastResetMap.get(student.userPrincipalName.toLowerCase())!;
+    }
+    if (student.otherMails && student.otherMails.length > 0) {
+      for (const mail of student.otherMails) {
+        if (mail && lastResetMap.has(mail.toLowerCase())) {
+          return lastResetMap.get(mail.toLowerCase())!;
+        }
+      }
+    }
+    return null;
+  }, [lastResetMap]);
 
   // Pré-indexation ultra-rapide des étudiants
   const indexedStudents = useMemo<IndexedStudent[]>(() => {
@@ -222,12 +241,19 @@ export default function DashboardPage() {
     studentEspiEmail?: string
   ) => {
     try {
-      await axios.post('/api/reset-password', {
+      const response = await axios.post('/api/reset-password', {
         userId,
         userName,
         userEmail,
         temporaryPassword
       });
+
+      // Mise à jour instantanée du cache local des logs partagés (0ms de latence)
+      if (response.data?.log) {
+        mutateLogs((prevLogs) => [response.data.log, ...(prevLogs || [])], false);
+      } else {
+        mutateLogs();
+      }
 
       setSuccessModal({
         isOpen: true,
@@ -268,6 +294,12 @@ export default function DashboardPage() {
       setEmailSendingAnimation({ isOpen: false, userEmail: "" });
 
       if (response.data.success) {
+        // Mise à jour instantanée du journal après l'envoi de l'email
+        if (response.data?.log) {
+          mutateLogs((prevLogs) => [response.data.log, ...(prevLogs || [])], false);
+        } else {
+          mutateLogs();
+        }
         setEmailSentModal({ isOpen: true, userEmail });
       } else {
         alert("❌ Erreur lors de l'envoi de l'email de secours");
@@ -531,7 +563,7 @@ export default function DashboardPage() {
                   {/* Grille adaptative : 1 col (mobile), 2 cols (tablette), 3-4 cols (desktop) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-5 place-items-stretch">
                     {visibleResults.map((student: IndexedStudent) => {
-                      const lastReset = lastResetMap.get(student.id) || (student.mail ? lastResetMap.get(student.mail.toLowerCase()) : null);
+                      const lastReset = getStudentLastReset(student);
 
                       return (
                         <div 

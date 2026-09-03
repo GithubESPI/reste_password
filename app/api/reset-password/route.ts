@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     );
 
     // 3. Enregistrer l'action dans le journal d'audit
-    addLog({
+    const logEntry = addLog({
       action: 'RESET_PASSWORD',
       targetUserId: userId,
       targetUserName: userName || 'Utilisateur inconnu',
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Mot de passe réinitialisé avec succès pour l'utilisateur ID: ${userId}`);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, log: logEntry });
   } catch (error: any) {
     console.error('Erreur lors de la réinitialisation du mot de passe (API):', error.response?.data || error.message);
     
